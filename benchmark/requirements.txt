@@ -1,0 +1,10 @@
+# Per-case runtime libraries the benchmark exercises. Each case fails on a real,
+# documented breaking change in one of these, so they must be installed at (or
+# above) the version that removed the old API. Install on top of the repo's own
+# requirements.txt. The py310_collections case needs nothing beyond stdlib.
+numpy>=1.24
+pandas>=2.0
+pydantic>=2.0
+pydantic-settings>=2.0
+flask>=3.1
+markupsafe>=2.1

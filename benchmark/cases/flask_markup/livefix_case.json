@@ -1,0 +1,9 @@
+{
+  "title": "Markup removed from flask namespace in Flask 3.1",
+  "description": "from flask import Markup raises in Flask 3.1; the symbol now comes from markupsafe, which Flask no longer re-exports.",
+  "library": "flask",
+  "test_command": "python -m pytest -q",
+  "max_iters": 4,
+  "web_dependent": true,
+  "extra_requirements": ["flask>=3.1", "markupsafe>=2.1"]
+}

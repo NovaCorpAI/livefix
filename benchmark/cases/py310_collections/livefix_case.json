@@ -1,0 +1,9 @@
+{
+  "title": "collections.Mapping removed in Python 3.10",
+  "description": "A module imports Mapping from collections, which Python 3.10 removed. The fix moved to collections.abc years earlier but the old import lingered.",
+  "library": "stdlib (Python)",
+  "test_command": "python -m pytest -q",
+  "max_iters": 4,
+  "web_dependent": true,
+  "extra_requirements": []
+}

@@ -1,0 +1,9 @@
+{
+  "title": "BaseSettings moved to pydantic-settings in Pydantic v2",
+  "description": "Importing BaseSettings from pydantic raises in v2; it now lives in the separate pydantic-settings package.",
+  "library": "pydantic",
+  "test_command": "python -m pytest -q",
+  "max_iters": 4,
+  "web_dependent": true,
+  "extra_requirements": ["pydantic>=2.0", "pydantic-settings>=2.0"]
+}

@@ -1,0 +1,6 @@
+{
+  "title": "collections.Mapping removed in Python 3.10",
+  "description": "A module imports Mapping from collections, which Python 3.10 removed. LiveFix reads the traceback, searches the live web for the current import, and has Nemotron rewrite the file until the test passes.",
+  "test_command": "python -m pytest -q",
+  "max_iters": 4
+}

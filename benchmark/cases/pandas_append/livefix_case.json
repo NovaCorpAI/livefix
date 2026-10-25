@@ -1,0 +1,9 @@
+{
+  "title": "DataFrame.append removed in pandas 2.0",
+  "description": "Code calls df.append(...), which pandas removed in 2.0. The documented replacement is pd.concat.",
+  "library": "pandas",
+  "test_command": "python -m pytest -q",
+  "max_iters": 4,
+  "web_dependent": true,
+  "extra_requirements": ["pandas>=2.0"]
+}

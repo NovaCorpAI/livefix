@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LiveFix: self-healing code</title>
+<meta name="description" content="LiveFix is a web-grounded agent that repairs broken code against moving APIs: a failing test goes in, Tavily finds the current fix on the live web, an NVIDIA Nemotron model on Nebius Token Factory rewrites the code, and the test comes out green." />
+<meta property="og:title" content="LiveFix: self-healing code" />
+<meta property="og:description" content="A failing test goes in; Tavily finds the current fix on the live web, NVIDIA Nemotron on Nebius rewrites the code, and the test comes out green." />
+<meta property="og:type" content="website" />
+<meta name="theme-color" content="#0b0e14" />
+<style>
+  :root {
+    --bg: #0b0e14;
+    --panel: #121722;
+    --panel-2: #0e131c;
+    --border: #212838;
+    --text: #e6eaf2;
+    --muted: #8a94a7;
+    --accent: #7c9cff;
+    --accent-2: #00d4a0;
+    --red: #ff5c73;
+    --green: #27d796;
+    --amber: #ffbf5c;
+    --add: #123a2a;
+    --add-text: #5ef0b7;
+    --del: #3a1420;
+    --del-text: #ff8ba0;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: radial-gradient(1200px 600px at 70% -10%, #16203a 0%, var(--bg) 55%) fixed;
+    color: var(--text);
+    font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 40px 16px 80px; }
+  header .kicker { color: var(--accent-2); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; font-size: 12px; }
+  h1 { font-size: 34px; margin: 6px 0 8px; letter-spacing: -.02em; }
+  h1 .fix { color: var(--accent); }
+  .tagline { color: var(--muted); font-size: 16px; margin: 0 0 18px; max-width: 620px; }
+  .stack { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 999px; padding: 6px 12px; font-size: 13px; color: var(--text);
+  }
+  .chip .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .card {
+    background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px; margin-bottom: 18px;
+  }
+  .case-title { font-weight: 650; font-size: 17px; margin: 0 0 4px; }
+  .case-desc { color: var(--muted); margin: 0 0 16px; font-size: 14px; }
+  select, button { font: inherit; }
+  select {
+    background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 12px; width: 100%; margin-bottom: 14px;
+  }
+  .run-btn {
+    background: linear-gradient(180deg, #7c9cff, #5e7cf0); color: #0b0e14;
+    border: 0; border-radius: 10px; padding: 12px 20px; font-weight: 700;
+    cursor: pointer; transition: transform .08s ease, filter .15s ease;
+  }
+  .run-btn:hover { filter: brightness(1.07); }
+  .run-btn:active { transform: translateY(1px); }
+  .run-btn:disabled { opacity: .55; cursor: not-allowed; filter: grayscale(.3); }
+  .status-row { display: flex; align-items: center; gap: 12px; margin: 4px 0 18px; min-height: 30px; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px; font-weight: 650; font-size: 14px;
+    border-radius: 999px; padding: 7px 14px; border: 1px solid transparent;
+    transition: background .4s ease, color .4s ease, border-color .4s ease;
+  }
+  .pill .dot { width: 9px; height: 9px; border-radius: 50%; }
+  .pill.red { background: rgba(255,92,115,.12); color: var(--red); border-color: rgba(255,92,115,.35); }
+  .pill.red .dot { background: var(--red); }
+  .pill.green { background: rgba(39,215,150,.14); color: var(--green); border-color: rgba(39,215,150,.4); }
+  .pill.green .dot { background: var(--green); box-shadow: 0 0 10px rgba(39,215,150,.7); }
+  .pill.run { background: rgba(255,191,92,.12); color: var(--amber); border-color: rgba(255,191,92,.35); }
+  .pill.run .dot { background: var(--amber); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+  .arrow { color: var(--muted); }
+  .meta { color: var(--muted); font-size: 13px; }
+  .iter { border-left: 2px solid var(--border); padding: 2px 0 10px 18px; margin-left: 6px; position: relative; opacity: 0; transform: translateY(6px); animation: rise .4s forwards; }
+  @keyframes rise { to { opacity: 1; transform: none; } }
+  .iter::before { content: ""; position: absolute; left: -7px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--panel); border: 2px solid var(--accent); }
+  .iter.ok::before { border-color: var(--green); background: var(--green); }
+  .iter-head { font-weight: 650; margin-bottom: 8px; }
+  .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; margin: 12px 0 6px; }
+  .err { background: #1a0f16; border: 1px solid rgba(255,92,115,.25); color: #ffb3c0; border-radius: 8px; padding: 9px 12px; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; white-space: pre-wrap; word-break: break-word; }
+  .sources { display: flex; flex-direction: column; gap: 6px; }
+  .src { display: flex; align-items: center; gap: 10px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 11px; text-decoration: none; color: var(--text); font-size: 13px; }
+  .src:hover { border-color: var(--accent); }
+  .src .tv { color: var(--accent-2); font-weight: 700; font-size: 11px; border: 1px solid rgba(0,212,160,.4); border-radius: 5px; padding: 1px 6px; flex: none; }
+  .src .u { color: var(--muted); font-size: 12px; margin-left: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 40%; }
+  .note { background: var(--panel-2); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 9px 12px; font-size: 13.5px; }
+  .diff { background: #0a0d13; border: 1px solid var(--border); border-radius: 8px; overflow-x: auto; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; }
+  .diff .ln { padding: 1px 12px; white-space: pre; }
+  .diff .add { background: var(--add); color: var(--add-text); }
+  .diff .del { background: var(--del); color: var(--del-text); }
+  .diff .hd { color: var(--muted); }
+  .footer-stats { display: flex; flex-wrap: wrap; gap: 16px; color: var(--muted); font-size: 13px; margin-top: 16px; }
+  .footer-stats b { color: var(--text); font-weight: 600; }
+  .hidden { display: none; }
+  a { color: var(--accent); }
+  .spin { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.25); border-top-color: #0b0e14; border-radius: 50%; display: inline-block; animation: sp .7s linear infinite; }
+  @keyframes sp { to { transform: rotate(360deg); } }
+  .flow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 4px 0 30px; }
+  .flow .step { display: inline-flex; align-items: center; gap: 9px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 10px 13px; font-size: 13.5px; font-weight: 600; }
+  .flow .step .n { width: 20px; height: 20px; border-radius: 50%; background: var(--panel-2); border: 1px solid var(--border); display: inline-flex; align-items: center; justify-content: center; font-size: 11px; color: var(--muted); font-weight: 700; flex: none; }
+  .flow .step.tavily { border-color: rgba(0,212,160,.45); }
+  .flow .step.model { border-color: rgba(118,185,0,.5); }
+  .flow .sep { color: var(--muted); font-size: 17px; }
+  .flow .loop { color: var(--amber); font-size: 12.5px; font-weight: 650; white-space: nowrap; }
+  .callout { background: var(--panel-2); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; margin-bottom: 18px; }
+  .callout h3 { margin: 0 0 6px; font-size: 15px; }
+  .callout p { margin: 0; color: var(--muted); font-size: 13.5px; }
+  .site-footer { border-top: 1px solid var(--border); margin-top: 30px; padding-top: 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; font-size: 13px; color: var(--muted); }
+  .site-footer a { color: var(--accent); text-decoration: none; }
+  .site-footer a:hover { text-decoration: underline; }
+  .site-footer .sepdot { opacity: .4; }
+  @media (max-width: 560px) {
+    h1 { font-size: 28px; }
+    .flow { gap: 7px; }
+    .flow .step { padding: 8px 10px; font-size: 12.5px; }
+    .flow .sep { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">Nebius Token Factory + Tavily reference app</div>
+    <h1>Live<span class="fix">Fix</span></h1>
+    <p class="tagline">Self-healing code. A failing test goes in; Tavily finds the current fix on the live web, an NVIDIA Nemotron model on Nebius Token Factory rewrites the code, and the test comes out green.</p>
+    <div class="stack">
+      <span class="chip"><span class="dot" style="background:#7c9cff"></span>Nebius Token Factory</span>
+      <span class="chip"><span class="dot" style="background:#76b900"></span>NVIDIA Nemotron</span>
+      <span class="chip"><span class="dot" style="background:#00d4a0"></span>Tavily web search</span>
+    </div>
+  </header>
+
+  <div class="flow" aria-label="The LiveFix repair loop">
+    <span class="step"><span class="n">1</span>Failing test</span>
+    <span class="sep">&rarr;</span>
+    <span class="step tavily"><span class="n">2</span>Tavily searches the live web</span>
+    <span class="sep">&rarr;</span>
+    <span class="step model"><span class="n">3</span>Nemotron on Nebius rewrites the file</span>
+    <span class="sep">&rarr;</span>
+    <span class="step"><span class="n">4</span>Re-run</span>
+    <span class="loop">&#8634; until green</span>
+  </div>
+
+  <div class="card">
+    <select id="caseSelect" aria-label="Choose a demo case"></select>
+    <p class="case-desc" id="caseDesc"></p>
+    <button class="run-btn" id="runBtn">Run LiveFix</button>
+  </div>
+
+  <div class="card hidden" id="results">
+    <div class="status-row" id="statusRow"></div>
+    <div id="timeline"></div>
+    <div class="footer-stats hidden" id="footerStats"></div>
+  </div>
+
+  <p class="tagline" style="font-size:13px;margin-top:10px">This hosted page replays a recorded live run of LiveFix (real Tavily sources, real Nemotron patch, real timing). The open source app runs the same loop live against the Nebius Token Factory and Tavily APIs.</p>
+
+  <div class="callout">
+    <h3>Does the web search actually earn its place?</h3>
+    <p>We built a five-case benchmark of real, documented, post-cutoff API breakages (across NumPy, pandas, Pydantic, Flask, and the standard library) and run the identical loop with Tavily on and off. The gap between the two is the value the live web adds. The harness ships an offline self-test, so the measurement is trustworthy before a single paid token is spent; the full on-versus-off table publishes with the run.</p>
+  </div>
+
+  <div class="site-footer">
+    <a href="https://nebiusglobalaihackathon.devpost.com/" target="_blank" rel="noopener">Nebius x NVIDIA Global AI Hackathon</a>
+    <span class="sepdot">&bull;</span>
+    <span>Coding &amp; Agentic track</span>
+    <span class="sepdot">&bull;</span>
+    <span>Best Use of Tavily</span>
+    <span class="sepdot">&bull;</span>
+    <span>MIT licensed</span>
+  </div>
+</div>
+
+<script type="application/json" id="casedata">[{"description": "A module imports Mapping from collections, which Python 3.10 removed. LiveFix reads the traceback, searches the live web for the current import, and has Nemotron rewrite the file until the test passes.", "id": "broken_project", "max_iters": 4, "test_command": "python -m pytest -q", "title": "collections.Mapping removed in Python 3.10"}]</script>
+<script type="application/json" id="rundata">{"broken_project": {"case": "broken_project", "elapsed": 11.6, "iterations": [{"changed": ["app.py"], "diffs": {"app.py": "--- a/app.py\n+++ b/app.py\n@@ -5,7 +5,7 @@\n of post-cutoff, documented migration LiveFix is meant to find and apply.\n \"\"\"\n \n-from collections import Mapping  # broken on Python 3.10+\n+from collections.abc import Mapping\n \n \n def count_keys(m):\n"}, "error": "E   ImportError: cannot import name 'Mapping' from 'collections' (C:\\Users\\Usuario\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\collections\\__init__.py)", "explanation": "Changed import from collections to collections.abc for Mapping as required in Python 3.10+.", "hits": [{"title": "Python Importerror: Cannot Import Name Mapping From Collections - GeeksforGeeks", "url": "https://www.geeksforgeeks.org/python/python-importerror-cannot-import-name-mapping-from-collections"}, {"title": "Importerror: cannot import name 'mapping' from 'collections'", "url": "https://itsourcecode.com/importerror/importerror-cannot-import-name-mapping-from-collections"}, {"title": "SOLVED: ImportError: cannot import name 'Mapping' from 'collections'. Correction: Iterable*", "url": "https://www.youtube.com/watch?v=qV1VXka_N7M"}, {"title": "ImportError: cannot import name 'Mapping' from 'collections' · Issue #4487 · boto/boto3 · GitHub", "url": "https://github.com/boto/boto3/issues/4487"}, {"title": "ImportError: cannot import name Mapping from 'collections' | bobbyhadz", "url": "https://bobbyhadz.com/blog/python-importerror-cannot-import-name-mapping-from-collections"}], "index": 1, "passed": false}, {"changed": [], "diffs": {}, "error": "", "explanation": "test already passing", "hits": [], "index": 2, "passed": true}], "model": "nvidia/nemotron-3-super-120b-a12b", "passed": true, "test_command": "python -m pytest -q", "title": "collections.Mapping removed in Python 3.10", "web_search": true}}</script>
+<script>
+const esc = (s) => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const CASES = JSON.parse(document.getElementById('casedata').textContent);
+const RUNS = JSON.parse(document.getElementById('rundata').textContent);
+
+function loadCases() {
+  const sel = document.getElementById('caseSelect');
+  sel.innerHTML = CASES.map((c) => `<option value="${esc(c.id)}">${esc(c.title || c.id)}</option>`).join('');
+  sel.onchange = showDesc;
+  showDesc();
+}
+function showDesc() {
+  const id = document.getElementById('caseSelect').value;
+  const c = CASES.find(x => x.id === id);
+  document.getElementById('caseDesc').textContent = c ? (c.description || '') : '';
+}
+
+function diffHtml(diff) {
+  const lines = (diff || '').split('\n').filter(l => l.length);
+  return '<div class="diff">' + lines.map(l => {
+    let cls = '';
+    if (l.startsWith('+') && !l.startsWith('+++')) cls = 'add';
+    else if (l.startsWith('-') && !l.startsWith('---')) cls = 'del';
+    else if (l.startsWith('@@') || l.startsWith('+++') || l.startsWith('---')) cls = 'hd';
+    return `<div class="ln ${cls}">${esc(l)}</div>`;
+  }).join('') + '</div>';
+}
+
+function setStatus(state) {
+  const row = document.getElementById('statusRow');
+  if (state === 'running')
+    row.innerHTML = '<span class="pill run"><span class="dot"></span>Test failing</span><span class="arrow">running LiveFix...</span>';
+  else if (state === 'red')
+    row.innerHTML = '<span class="pill red"><span class="dot"></span>Test failing</span>';
+  else if (state === 'flip')
+    row.innerHTML = '<span class="pill red"><span class="dot"></span>Test failing</span><span class="arrow">to</span><span class="pill green"><span class="dot"></span>Test passing</span>';
+}
+
+async function runCase() {
+  const id = document.getElementById('caseSelect').value;
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Running...';
+  document.getElementById('results').classList.remove('hidden');
+  document.getElementById('timeline').innerHTML = '';
+  document.getElementById('footerStats').classList.add('hidden');
+  setStatus('running');
+
+  const data = RUNS[id];
+  await sleep(1100); // let the "running" state read before the recorded result reveals
+
+  setStatus('red');
+  await sleep(500);
+  const tl = document.getElementById('timeline');
+
+  for (const it of data.iterations) {
+    if (it.passed) continue; // the trailing "already passing" probe
+    const div = document.createElement('div');
+    div.className = 'iter';
+    let html = `<div class="iter-head">Iteration ${it.index}</div>`;
+    if (it.error) html += `<div class="label">Failing test</div><div class="err">${esc(it.error)}</div>`;
+    tl.appendChild(div); div.innerHTML = html;
+    await sleep(650);
+
+    if (it.hits && it.hits.length) {
+      const src = document.createElement('div');
+      src.innerHTML = `<div class="label">Tavily grounded the fix on ${it.hits.length} live source(s)</div>`
+        + '<div class="sources">' + it.hits.map(h =>
+            `<a class="src" href="${esc(h.url)}" target="_blank" rel="noopener"><span class="tv">TAVILY</span>${esc(h.title || h.url)}<span class="u">${esc(h.url)}</span></a>`
+          ).join('') + '</div>';
+      div.appendChild(src);
+      await sleep(700);
+    }
+    if (it.explanation) {
+      const n = document.createElement('div');
+      n.innerHTML = `<div class="label">Nemotron rewrote the code</div><div class="note">${esc(it.explanation)}</div>`;
+      div.appendChild(n);
+      await sleep(500);
+    }
+    for (const [file, diff] of Object.entries(it.diffs || {})) {
+      const d = document.createElement('div');
+      d.innerHTML = `<div class="label">Patch: ${esc(file)}</div>` + diffHtml(diff);
+      div.appendChild(d);
+      await sleep(400);
+    }
+  }
+
+  await sleep(300);
+  if (data.passed) {
+    setStatus('flip');
+    const last = document.querySelector('.iter:last-child');
+    if (last) last.classList.add('ok');
+  }
+  const fs = document.getElementById('footerStats');
+  fs.classList.remove('hidden');
+  fs.innerHTML =
+    `<span>Model: <b>${esc(data.model)}</b></span>`
+    + `<span>Web search: <b>${data.web_search ? 'Tavily (on)' : 'off'}</b></span>`
+    + `<span>Test: <b>${esc(data.test_command)}</b></span>`
+    + `<span>Elapsed: <b>${esc(data.elapsed)}s</b></span>`;
+  btn.disabled = false; btn.textContent = 'Run again';
+}
+
+document.getElementById('runBtn').onclick = runCase;
+loadCases();
+</script>
+</body>
+</html>
