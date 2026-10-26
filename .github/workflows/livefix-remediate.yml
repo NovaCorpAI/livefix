@@ -61,7 +61,9 @@ jobs:
             echo "message<<LIVEFIX_EOF"
             echo "${{ steps.fix.outputs.pr-title }}"
             echo ""
-            cat "${{ steps.fix.outputs.commit-trailer-file }}"
+            # $(...) trims trailing newlines; printf adds exactly one, so the
+            # closing delimiter always lands on its own line.
+            printf '%s\n' "$(cat "${{ steps.fix.outputs.commit-trailer-file }}")"
             echo "LIVEFIX_EOF"
           } >> "$GITHUB_OUTPUT"
 
