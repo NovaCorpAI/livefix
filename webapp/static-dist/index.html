@@ -215,6 +215,7 @@
     <p class="tagline">A dependency has a vulnerability. The safe version is newer than any model's training data, and the upgrade that patches it often breaks your code. LiveFix resolves the safe version from the live web, bumps the pin, and repairs what the upgrade breaks, verified by your own tests. A merge-ready fix, not a red bump PR.</p>
     <div class="cta-row">
       <a href="#demo" class="btn primary">Watch a real remediation</a>
+      <a href="https://github.com/NovaCorpAI/livefix" target="_blank" rel="noopener" class="btn ghost">Read the code</a>
       <a href="https://nebiusglobalaihackathon.devpost.com/" target="_blank" rel="noopener" class="btn ghost">The hackathon</a>
     </div>
     <div class="stack">
@@ -246,6 +247,13 @@
         <p>The safe version is often a major release that removed an API you used. So the upgrade that closes the CVE turns your tests red, and the PR rots unmerged.</p>
       </div>
     </div>
+  </section>
+
+  <section class="reveal">
+    <p class="eyebrow">Where it fits</p>
+    <h2>The last mile your scanner leaves open</h2>
+    <p class="lede" style="margin-bottom:14px">LiveFix is not another scanner. It is the one step every scanner leaves to you: scan, alert, bump PR, and then today a human, or a PR that rots. We sit on top of the scanner you already run and turn its red bump PR into a green, merge-ready change. The wedge is a partnership, not a fight: your scanner says what is broken, LiveFix lands the fix.</p>
+    <p class="lede">The product follows directly: a GitHub App billed per repository, triggered by the alert you already receive, and measured in the number security leaders now report to their board, mean time to remediate. Every advisory landed green is engineer-hours saved and days off an MTTR that the EU Cyber Resilience Act and the SEC disclosure rules are turning into a hard obligation.</p>
   </section>
 
   <section class="reveal">
@@ -319,6 +327,7 @@
         <div class="diff"><div class="ln">- uses: novacorp-labs/livefix@v1</div><div class="ln">  with:</div><div class="ln">    package: pillow</div><div class="ln">    advisory: CVE-2026-112398</div></div>
       </div>
     </div>
+    <p class="replay-note" style="margin:0 0 18px">Bring your own keys: the CLI reads a local <code>.env</code>, the Action reads your repo secrets, never the code. Use dedicated CI keys with a spend cap. <a href="https://github.com/NovaCorpAI/livefix#connect-your-credentials" target="_blank" rel="noopener">Setup guide</a>.</p>
     <div class="label">The pull request it opens</div>
     <div class="card prcard">
       <div class="pr-title">Security remediation: CVE-2026-112398 in pillow</div>
@@ -353,13 +362,6 @@
   </section>
 
   <section class="reveal">
-    <p class="eyebrow">Where it fits</p>
-    <h2>The last mile your scanner leaves open</h2>
-    <p class="lede" style="margin-bottom:14px">LiveFix is not another scanner. It is the one step every scanner leaves to you: scan, alert, bump PR, and then today a human, or a PR that rots. We sit on top of the scanner you already run and turn its red bump PR into a green, merge-ready change. The wedge is a partnership, not a fight: your scanner says what is broken, LiveFix lands the fix.</p>
-    <p class="lede">The product follows directly: a GitHub App billed per repository, triggered by the alert you already receive, and measured in the number security leaders now report to their board, mean time to remediate. Every advisory landed green is engineer-hours saved and days off an MTTR that the EU Cyber Resilience Act and the SEC disclosure rules are turning into a hard obligation.</p>
-  </section>
-
-  <section class="reveal">
     <p class="eyebrow">The stack, and what each part does</p>
     <h2>Four services, one job each</h2>
     <div class="flow">
@@ -389,6 +391,8 @@
 
   <div class="site-footer">
     <a href="https://nebiusglobalaihackathon.devpost.com/" target="_blank" rel="noopener">Nebius x NVIDIA Global AI Hackathon</a>
+    <span class="sepdot">&bull;</span>
+    <a href="https://github.com/NovaCorpAI/livefix" target="_blank" rel="noopener">Source on GitHub</a>
     <span class="sepdot">&bull;</span>
     <span>Coding &amp; Agentic track</span>
     <span class="sepdot">&bull;</span>

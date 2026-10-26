@@ -132,6 +132,36 @@ a human reviewed it. A rendered example is in
 [`examples/sample_remediation_pr.md`](examples/sample_remediation_pr.md), and a
 full workflow in [`.github/workflows/livefix-remediate.yml`](.github/workflows/livefix-remediate.yml).
 
+## Connect your credentials
+
+LiveFix uses two services you bring yourself, both with a free tier. You never
+hand your keys to us; they stay in your own environment.
+
+1. **Nebius Token Factory** (serves the model): create a key in the Nebius AI
+   Studio / Token Factory dashboard. It becomes `NEBIUS_API_KEY`.
+2. **Tavily** (live web search): create a key at <https://tavily.com>. It becomes
+   `TAVILY_API_KEY`.
+
+**For the CLI**, put them in a local `.env` (it is git-ignored, never committed):
+
+```
+NEBIUS_API_KEY=...
+TAVILY_API_KEY=...
+```
+
+**For the GitHub Action**, add them as encrypted repository secrets (Settings >
+Secrets and variables > Actions > New repository secret), named `NEBIUS_API_KEY`
+and `TAVILY_API_KEY`. Secrets are never stored in the code, are masked in the
+logs, and GitHub does not expose them to pull requests opened from forks, so
+browsing the repo never reveals them.
+
+**Keep it safe:**
+
+- Use keys dedicated to CI, each with a spend cap, so even a worst case is bounded.
+- Keep the workflow trigger as `workflow_dispatch` (or pushes to your own
+  branches). Never `pull_request_target`, which would run fork code with secrets.
+- Pin third-party actions to a commit SHA, and rotate the keys after a public demo.
+
 ## Configuration
 
 | Variable | Purpose | Default |
