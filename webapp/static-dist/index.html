@@ -105,6 +105,12 @@
   .bench-table .cve { font-family: var(--font-mono); font-size: 12.5px; color: var(--text); }
   .bench-table .cve a { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--muted-2); }
   .bench-table .cve a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+  .arch-wrap { overflow-x: auto; margin: 0 0 22px; }
+  .arch { display: block; width: 100%; min-width: 680px; height: auto; }
+  .arch text { font-family: var(--font-sans, 'Sora', system-ui, sans-serif); }
+  .arch .arch-title { fill: var(--text); font-weight: 600; font-size: 12.5px; }
+  .arch .arch-tag { font-size: 10px; font-family: var(--font-mono, monospace); }
+  .arch .arch-loop { fill: var(--muted); font-size: 10.5px; font-style: italic; }
   .bench-table .sub { color: var(--muted); font-size: 12px; }
   .bench-table .on { color: var(--green); font-weight: 700; font-family: var(--font-mono); }
   .bench-table .off { color: var(--muted); font-weight: 600; font-family: var(--font-mono); }
@@ -283,6 +289,45 @@
   <section class="reveal">
     <p class="eyebrow">How it works</p>
     <h2>The remediation loop</h2>
+    <div class="arch-wrap">
+      <svg class="arch" viewBox="0 0 960 150" role="img" aria-label="An advisory is resolved to a safe version with Tavily, the pin is bumped, the break is repaired with NVIDIA Nemotron on Nebius, and the project tests verify in a loop until green, producing a signed, verified pull request.">
+        <defs>
+          <marker id="ah" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--muted-2)"/></marker>
+          <marker id="ahg" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--nvidia)"/></marker>
+        </defs>
+        <line x1="180" y1="58" x2="199" y2="58" stroke="var(--muted-2)" stroke-width="1.5" marker-end="url(#ah)"/>
+        <line x1="370" y1="58" x2="389" y2="58" stroke="var(--muted-2)" stroke-width="1.5" marker-end="url(#ah)"/>
+        <line x1="560" y1="58" x2="579" y2="58" stroke="var(--muted-2)" stroke-width="1.5" marker-end="url(#ah)"/>
+        <line x1="750" y1="58" x2="769" y2="58" stroke="var(--muted-2)" stroke-width="1.5" marker-end="url(#ah)"/>
+        <path d="M665,90 C665,126 475,126 475,92" fill="none" stroke="var(--nvidia)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#ahg)"/>
+        <text x="570" y="145" text-anchor="middle" class="arch-loop">loop until the tests pass</text>
+        <g>
+          <rect x="10" y="28" width="170" height="60" rx="11" fill="var(--panel-2)" stroke="var(--border)"/>
+          <text x="95" y="53" text-anchor="middle" class="arch-title">Advisory</text>
+          <text x="95" y="71" text-anchor="middle" class="arch-tag" fill="var(--muted)">from your scanner</text>
+        </g>
+        <g>
+          <rect x="200" y="28" width="170" height="60" rx="11" fill="var(--panel-2)" stroke="var(--accent-2)"/>
+          <text x="285" y="53" text-anchor="middle" class="arch-title">Resolve safe version</text>
+          <text x="285" y="71" text-anchor="middle" class="arch-tag" fill="var(--accent-2)">Tavily</text>
+        </g>
+        <g>
+          <rect x="390" y="28" width="170" height="60" rx="11" fill="var(--panel-2)" stroke="var(--accent)"/>
+          <text x="475" y="53" text-anchor="middle" class="arch-title">Bump + repair</text>
+          <text x="475" y="71" text-anchor="middle" class="arch-tag" fill="var(--accent)">Nemotron &middot; Nebius</text>
+        </g>
+        <g>
+          <rect x="580" y="28" width="170" height="60" rx="11" fill="var(--panel-2)" stroke="var(--nvidia)"/>
+          <text x="665" y="53" text-anchor="middle" class="arch-title">Verify</text>
+          <text x="665" y="71" text-anchor="middle" class="arch-tag" fill="var(--nvidia)">your tests</text>
+        </g>
+        <g>
+          <rect x="770" y="28" width="180" height="60" rx="11" fill="var(--panel-2)" stroke="var(--nvidia)"/>
+          <text x="860" y="53" text-anchor="middle" class="arch-title">Signed PR</text>
+          <text x="860" y="71" text-anchor="middle" class="arch-tag" fill="var(--nvidia)">remediation-verified</text>
+        </g>
+      </svg>
+    </div>
     <div class="flow">
       <div class="step">
         <span class="n">01</span>

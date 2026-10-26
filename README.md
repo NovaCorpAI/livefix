@@ -41,6 +41,21 @@ python -m livefix.remediate \
 
 The result is a green, merge-ready change instead of a red bump PR.
 
+```mermaid
+flowchart LR
+    A[Advisory id<br/>from your scanner] --> B[Resolve safe version<br/>Tavily live web]
+    B --> C[Bump the pin<br/>manifest]
+    C --> D[Repair the break<br/>NVIDIA Nemotron on Nebius]
+    D --> E{Tests pass?}
+    E -- no --> D
+    E -- yes --> F[Signed, verified PR<br/>LiveFix / remediation-verified ✓]
+```
+
+Two walls keep a security bump from going green: **the fact** (which version is
+safe for a fresh CVE, which only the live web holds) and **the break** (the code
+the upgrade changed). Tavily answers the first, Nemotron on Nebius the second, and
+the project's own tests gate the result.
+
 ## Why this is a good use of Tavily
 
 The load-bearing step is the one a model provably cannot do from memory: name the
