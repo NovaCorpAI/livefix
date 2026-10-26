@@ -55,6 +55,39 @@
       "fixed_versions": ["7.5.19"],
       "min_safe": "7.5.19",
       "ground_truth_source": "https://github.com/advisories/GHSA-23hp-3jrh-7fpw"
+    },
+    {
+      "id": "golang-x-net-CVE-2026-27141",
+      "package": "golang.org/x/net",
+      "ecosystem": "Go",
+      "advisory": "CVE-2026-27141",
+      "note": "HTTP/2 frame handling can panic the server (DoS)",
+      "query": "golang.org/x/net CVE-2026-27141 GO-2026-4559 fixed patched version",
+      "fixed_versions": ["0.51.0"],
+      "min_safe": "0.51.0",
+      "ground_truth_source": "https://pkg.go.dev/vuln/GO-2026-4559"
+    },
+    {
+      "id": "golang-x-crypto-CVE-2026-39828",
+      "package": "golang.org/x/crypto",
+      "ecosystem": "Go",
+      "advisory": "CVE-2026-39828",
+      "note": "SSH certificate restriction bypass in golang.org/x/crypto/ssh",
+      "query": "golang.org/x/crypto CVE-2026-39828 GHSA-45gg-vh54-h5m9 fixed patched version",
+      "fixed_versions": ["0.52.0"],
+      "min_safe": "0.52.0",
+      "ground_truth_source": "https://osv.dev/vulnerability/GHSA-45gg-vh54-h5m9"
+    },
+    {
+      "id": "tokio-CVE-2026-115567",
+      "package": "tokio",
+      "ecosystem": "crates.io",
+      "advisory": "CVE-2026-115567",
+      "note": "Race condition in tokio::time::Interval",
+      "query": "tokio CVE-2026-115567 RUSTSEC crate fixed patched version",
+      "fixed_versions": ["1.54.1"],
+      "min_safe": "1.54.1",
+      "ground_truth_source": "https://osv.dev/vulnerability/GHSA-5wjr-9356-4wc8"
     }
   ]
 }

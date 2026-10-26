@@ -78,9 +78,9 @@ would make it instantly legible.
   was small.
 - Tavily `search_depth="advanced"` returned genuinely useful, current snippets for
   freshly disclosed CVEs, which is the load-bearing premise of LiveFix: on a
-  benchmark of five real 2026 CVEs across two ecosystems (PyPI and npm) the model
-  named the safe version 15/15 with Tavily and 0/15 without (it abstained). It
-  held up.
+  benchmark of eight real 2026 CVEs across four ecosystems (PyPI, npm, Go and Rust)
+  the model named the safe version 24/24 with Tavily and 0/24 without (it
+  abstained). It held up.
 - Nemotron produced correct minimal patches when grounded with current docs, and
   abstained honestly rather than hallucinating when it lacked the fact.
 

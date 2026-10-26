@@ -60,9 +60,9 @@ the project's own tests gate the result.
 
 The load-bearing step is the one a model provably cannot do from memory: name the
 safe version for a freshly disclosed CVE. We measured it. [`benchmark/security/`](benchmark/security/)
-gives the same Nemotron model five real, 2026-disclosed CVEs, across two
-ecosystems (PyPI and npm), and asks for the minimal safe version, with the live
-web on and off. Identical model, identical prompt, one switch:
+gives the same Nemotron model eight real, 2026-disclosed CVEs, across four
+ecosystems (PyPI, npm, Go and Rust), and asks for the minimal safe version, with
+the live web on and off. Identical model, identical prompt, one switch:
 
 | Advisory (2026) | Package | Ecosystem | Web ON | Web OFF |
 | --- | --- | --- | --- | --- |
@@ -71,6 +71,9 @@ web on and off. Identical model, identical prompt, one switch:
 | CVE-2026-42309 (heap overflow) | pillow | PyPI | 3/3 | 0/3 (abstained) |
 | CVE-2026-97689 (chunk-size buffering) | urllib3 | PyPI | 3/3 | 0/3 (abstained) |
 | CVE-2026-59873 (decompression DoS) | tar | npm | 3/3 | 0/3 (abstained) |
+| CVE-2026-27141 (HTTP/2 server panic) | golang.org/x/net | Go | 3/3 | 0/3 (abstained) |
+| CVE-2026-39828 (SSH cert bypass) | golang.org/x/crypto | Go | 3/3 | 0/3 (abstained) |
+| CVE-2026-115567 (Interval race) | tokio | Rust | 3/3 | 0/3 (abstained) |
 
 Without the web the model does not hallucinate a version, it **abstains**: it
 knows it cannot know. Tavily fills exactly that gap.

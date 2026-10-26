@@ -58,10 +58,10 @@ On screen: run the security benchmark (or show `benchmark/security/results/lates
 python benchmark/security/run_security_benchmark.py --repeats 3
 ```
 
-Say: "One fix is a demo. We measured it on five real 2026 CVEs across two
-ecosystems, PyPI and npm, same model, web on versus off. Fifteen out of fifteen
-remediated with Tavily, zero out of fifteen without, and without the web the model
-doesn't guess, it abstains. That gap is the value of live search, and it's
+Say: "One fix is a demo. We measured it on eight real 2026 CVEs across four
+ecosystems, PyPI, npm, Go and Rust, same model, web on versus off. Twenty-four out
+of twenty-four remediated with Tavily, zero out of twenty-four without, and
+without the web the model doesn't guess, it abstains. That gap is the value of live search, and it's
 impossible to fake. We're also honest about the limit: for old, well-known API
 breaks the model needs no web. The web earns its place on the fact it can't know:
 the fresh CVE's safe version."

@@ -68,10 +68,11 @@ We did not want to assert that web search helps, so we measured it, and we were
 honest about what we found.
 
 The load-bearing claim is that a plain model cannot name the safe version for a
-fresh CVE. `benchmark/security/` gives the same Nemotron model five real,
-2026-disclosed CVEs across two ecosystems (Pillow, Brotli and urllib3 on PyPI,
-node-tar on npm) and asks for the minimal safe version, with the live web on and
-off. The result: **15/15 correct with Tavily, 0/15 without.** And without the web
+fresh CVE. `benchmark/security/` gives the same Nemotron model eight real,
+2026-disclosed CVEs across four ecosystems (Pillow, Brotli and urllib3 on PyPI,
+node-tar on npm, golang.org/x/net and x/crypto on Go, tokio on Rust) and asks for
+the minimal safe version, with the live web on and off. The result: **24/24
+correct with Tavily, 0/24 without.** And without the web
 the model does not hallucinate, it **abstains**: it knows it cannot know. That is
 the gap Tavily fills, and it is impossible to fake.
 
@@ -146,8 +147,8 @@ LiveFix reports the exact tokens and estimated cost on every run.
 - A working, safe, end-to-end remediation in a small, readable codebase, proven
   live: the GitHub Action opened two signed, verified PRs, one of them repairing a
   break that spanned three files.
-- A benchmark that turns the core claim into a clean number (15/15 vs 0/15) on
-  five real, independently verifiable 2026 CVEs across two ecosystems, plus the
+- A benchmark that turns the core claim into a clean number (24/24 vs 0/24) on
+  eight real, independently verifiable 2026 CVEs across four ecosystems, plus the
   intellectual honesty to show where the web does *not* help.
 - Concrete, actionable platform feedback from genuinely building on the stack.
 

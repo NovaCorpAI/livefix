@@ -232,9 +232,9 @@
       <span class="chip"><span class="dot" style="background:#00d4a0"></span>Tavily web search</span>
     </div>
     <div class="stats">
-      <div class="stat"><div class="big">15<span class="slash">/</span>15</div><div class="lab">CVEs remediated with live web search</div></div>
-      <div class="stat"><div class="big">0<span class="slash">/</span>15</div><div class="lab">remediated without it: the model abstains</div></div>
-      <div class="stat"><div class="big">5</div><div class="lab">real 2026 CVEs, across PyPI and npm</div></div>
+      <div class="stat"><div class="big">24<span class="slash">/</span>24</div><div class="lab">CVEs remediated with live web search</div></div>
+      <div class="stat"><div class="big">0<span class="slash">/</span>24</div><div class="lab">remediated without it: the model abstains</div></div>
+      <div class="stat"><div class="big">8</div><div class="lab">real 2026 CVEs, across four ecosystems</div></div>
     </div>
   </header>
 
@@ -268,7 +268,7 @@
   <section class="reveal">
     <p class="eyebrow">The evidence</p>
     <h2>What a plain model cannot do</h2>
-    <p class="lede" style="margin-bottom:16px">We gave the same NVIDIA Nemotron model five real, 2026-disclosed CVEs, across two ecosystems (PyPI and npm), and asked for the minimal safe version, with the live web on and off. Identical model, identical prompt, one switch. Each cell is correct answers over three runs.</p>
+    <p class="lede" style="margin-bottom:16px">We gave the same NVIDIA Nemotron model eight real, 2026-disclosed CVEs, across four ecosystems (PyPI, npm, Go and Rust), and asked for the minimal safe version, with the live web on and off. Identical model, identical prompt, one switch. Each cell is correct answers over three runs.</p>
     <div class="bench-wrap">
       <table class="bench-table">
         <thead>
@@ -280,6 +280,9 @@
           <tr><td class="cve"><a href="https://nvd.nist.gov/vuln/detail/CVE-2026-42309" target="_blank" rel="noopener">CVE-2026-42309</a><div class="sub">heap overflow</div></td><td>pillow</td><td class="on">3/3</td><td class="off">0/3 <small>abstained</small></td></tr>
           <tr><td class="cve"><a href="https://nvd.nist.gov/vuln/detail/CVE-2026-97689" target="_blank" rel="noopener">CVE-2026-97689</a><div class="sub">chunk-size buffering</div></td><td>urllib3</td><td class="on">3/3</td><td class="off">0/3 <small>abstained</small></td></tr>
           <tr><td class="cve"><a href="https://nvd.nist.gov/vuln/detail/CVE-2026-59873" target="_blank" rel="noopener">CVE-2026-59873</a><div class="sub">node-tar DoS (npm)</div></td><td>tar</td><td class="on">3/3</td><td class="off">0/3 <small>abstained</small></td></tr>
+          <tr><td class="cve"><a href="https://nvd.nist.gov/vuln/detail/CVE-2026-27141" target="_blank" rel="noopener">CVE-2026-27141</a><div class="sub">HTTP/2 server panic (Go)</div></td><td>x/net</td><td class="on">3/3</td><td class="off">0/3 <small>abstained</small></td></tr>
+          <tr><td class="cve"><a href="https://nvd.nist.gov/vuln/detail/CVE-2026-39828" target="_blank" rel="noopener">CVE-2026-39828</a><div class="sub">SSH cert bypass (Go)</div></td><td>x/crypto</td><td class="on">3/3</td><td class="off">0/3 <small>abstained</small></td></tr>
+          <tr><td class="cve"><a href="https://nvd.nist.gov/vuln/detail/CVE-2026-115567" target="_blank" rel="noopener">CVE-2026-115567</a><div class="sub">Interval race (Rust)</div></td><td>tokio</td><td class="on">3/3</td><td class="off">0/3 <small>abstained</small></td></tr>
         </tbody>
       </table>
     </div>
