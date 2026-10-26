@@ -3,4 +3,4 @@
 # release removed several ImageCmsProfile attributes this codebase reads across
 # three modules (product_name, product_desc, product_copyright), so the single
 # security upgrade breaks the build in more than one place at once.
-pillow==12.3.0
+pillow>=13.0.0
