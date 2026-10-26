@@ -71,7 +71,9 @@ jobs:
         if: steps.fix.outputs.verified == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
-          branch: livefix/${{ github.event.inputs.advisory }}
+          # Unique per run so remediating the same advisory in different
+          # projects opens distinct PRs instead of overwriting one branch.
+          branch: livefix/${{ github.event.inputs.advisory }}-${{ github.run_number }}
           title: ${{ steps.fix.outputs.pr-title }}
           body-path: ${{ steps.fix.outputs.pr-body-file }}
           commit-message: ${{ steps.msg.outputs.message }}
