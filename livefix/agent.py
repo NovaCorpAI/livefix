@@ -163,6 +163,21 @@ def _build_user_prompt(
     return "".join(parts)
 
 
+def _valid_python(files: dict[str, str]) -> bool:
+    """Reject a proposed change that would write syntactically invalid Python.
+    A model occasionally returns a .py file with a broken docstring or stray
+    escaping; applying it just trades one failing test for a worse one. Requiring
+    the repaired .py to parse means the retry loop keeps looking for a clean one."""
+    import ast
+    for path, content in files.items():
+        if path.endswith(".py"):
+            try:
+                ast.parse(content)
+            except SyntaxError:
+                return False
+    return True
+
+
 class LiveFixAgent:
     def __init__(self, config, project_dir: str | Path, test_command: str):
         self.config = config
@@ -251,9 +266,9 @@ class LiveFixAgent:
                 except Exception:
                     continue  # transient model/API failure: fall through to the next attempt
                 explanation, proposed = _parse_files(reply)
-                if proposed and self._changes_something(proposed):
+                if proposed and self._changes_something(proposed) and _valid_python(proposed):
                     break
-                proposed = {}  # unusable (no JSON, or a no-op); keep trying
+                proposed = {}  # unusable (no JSON, a no-op, or invalid Python); keep trying
             changed, diffs = self._apply(proposed)
             result.iterations.append(
                 Iteration(i, False, error, query, hits, changed, explanation, diffs))

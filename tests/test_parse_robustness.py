@@ -1,6 +1,19 @@
 """The repair parser must survive a model that wraps file contents in Python
 triple quotes instead of a JSON string (observed with Nemotron)."""
-from livefix.agent import _parse_files
+from livefix.agent import _parse_files, _valid_python
+
+
+def test_valid_python_accepts_good_file():
+    assert _valid_python({"a.py": "def f():\n    return 1\n"})
+
+
+def test_valid_python_rejects_broken_docstring():
+    # A real failure mode: an unterminated triple-quoted string.
+    assert not _valid_python({"a.py": '"""doc\nfrom x import y\n""\nz = 1\n'})
+
+
+def test_valid_python_ignores_non_python():
+    assert _valid_python({"requirements.txt": "pillow>=13.0.0\n"})
 
 
 def test_parse_triple_quoted_file_value():

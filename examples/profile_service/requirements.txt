@@ -1,0 +1,6 @@
+# This service pins a Pillow version with a known critical RCE
+# (CVE-2026-112398). The fix only ships in Pillow 13.0.0, and that major
+# release removed several ImageCmsProfile attributes this codebase reads across
+# three modules (product_name, product_desc, product_copyright), so the single
+# security upgrade breaks the build in more than one place at once.
+pillow==12.3.0
