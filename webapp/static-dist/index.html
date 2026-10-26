@@ -103,6 +103,8 @@
   .bench-table thead th { font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--panel-2); font-weight: 500; }
   .bench-table tbody tr:last-child td { border-bottom: 0; }
   .bench-table .cve { font-family: var(--font-mono); font-size: 12.5px; color: var(--text); }
+  .bench-table .cve a { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--muted-2); }
+  .bench-table .cve a:hover { color: var(--accent); border-bottom-color: var(--accent); }
   .bench-table .sub { color: var(--muted); font-size: 12px; }
   .bench-table .on { color: var(--green); font-weight: 700; font-family: var(--font-mono); }
   .bench-table .off { color: var(--muted); font-weight: 600; font-family: var(--font-mono); }
@@ -266,15 +268,16 @@
           <tr><th>Advisory (2026)</th><th>Package</th><th>Web ON</th><th>Web OFF</th></tr>
         </thead>
         <tbody>
-          <tr><td class="cve">CVE-2026-112398<div class="sub">critical RCE</div></td><td>pillow</td><td class="on">3/3</td><td class="off">0/3 <small>abstained</small></td></tr>
-          <tr><td class="cve">CVE-2026-111497<div class="sub">Brotli decoder RCE</div></td><td>brotli</td><td class="on">3/3</td><td class="off">0/3 <small>abstained</small></td></tr>
-          <tr><td class="cve">CVE-2026-42309<div class="sub">heap overflow</div></td><td>pillow</td><td class="on">3/3</td><td class="off">0/3 <small>abstained</small></td></tr>
-          <tr><td class="cve">CVE-2026-97689<div class="sub">chunk-size buffering</div></td><td>urllib3</td><td class="on">3/3</td><td class="off">0/3 <small>abstained</small></td></tr>
-          <tr><td class="cve">CVE-2026-59873<div class="sub">node-tar DoS (npm)</div></td><td>tar</td><td class="on">3/3</td><td class="off">0/3 <small>abstained</small></td></tr>
+          <tr><td class="cve"><a href="https://nvd.nist.gov/vuln/detail/CVE-2026-112398" target="_blank" rel="noopener">CVE-2026-112398</a><div class="sub">critical RCE</div></td><td>pillow</td><td class="on">3/3</td><td class="off">0/3 <small>abstained</small></td></tr>
+          <tr><td class="cve"><a href="https://nvd.nist.gov/vuln/detail/CVE-2026-111497" target="_blank" rel="noopener">CVE-2026-111497</a><div class="sub">Brotli decoder RCE</div></td><td>brotli</td><td class="on">3/3</td><td class="off">0/3 <small>abstained</small></td></tr>
+          <tr><td class="cve"><a href="https://nvd.nist.gov/vuln/detail/CVE-2026-42309" target="_blank" rel="noopener">CVE-2026-42309</a><div class="sub">heap overflow</div></td><td>pillow</td><td class="on">3/3</td><td class="off">0/3 <small>abstained</small></td></tr>
+          <tr><td class="cve"><a href="https://nvd.nist.gov/vuln/detail/CVE-2026-97689" target="_blank" rel="noopener">CVE-2026-97689</a><div class="sub">chunk-size buffering</div></td><td>urllib3</td><td class="on">3/3</td><td class="off">0/3 <small>abstained</small></td></tr>
+          <tr><td class="cve"><a href="https://nvd.nist.gov/vuln/detail/CVE-2026-59873" target="_blank" rel="noopener">CVE-2026-59873</a><div class="sub">node-tar DoS (npm)</div></td><td>tar</td><td class="on">3/3</td><td class="off">0/3 <small>abstained</small></td></tr>
         </tbody>
       </table>
     </div>
     <p class="honest"><b>The honest part:</b> without the web the model does not hallucinate a version, it <b>abstains</b> (it knows it cannot know). That is the gap Tavily fills. We only claim the web where it earns its place: on the post-cutoff fact. The code fix itself a strong model can often write unaided, so we don't overclaim it.</p>
+    <p class="honest" style="margin-top:10px"><b>And it is real:</b> every CVE above exists in NVD and OSV, and each safe version matches the authoritative GitHub Advisory fixed version. Click any id to verify it yourself.</p>
   </section>
 
   <section class="reveal">

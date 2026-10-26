@@ -1,5 +1,5 @@
 {
-  "_about": "Real dependency vulnerabilities (PyPI and npm) disclosed in 2026, after any current model's training cutoff. The remediation task is to name the minimal SAFE version to upgrade to. The model is given only the package name, its ecosystem and the advisory id (plus live web results when web is ON); it never sees this file. `fixed_versions` and `min_safe` are the ground truth, taken from advisory databases, used only to grade the answer. A package with several maintained branches has several valid fixes, so grading accepts any version in `fixed_versions` or any version >= `min_safe`.",
+  "_about": "Real dependency vulnerabilities (PyPI and npm) disclosed in 2026, after any current model's training cutoff. The remediation task is to name the minimal SAFE version to upgrade to. The model is given only the package name, its ecosystem and the advisory id (plus live web results when web is ON); it never sees this file. `fixed_versions` and `min_safe` are the ground truth, taken from advisory databases, used only to grade the answer. A package with several maintained branches has several valid fixes, so grading accepts any version in `fixed_versions` or any version >= `min_safe`. Every CVE here exists in NVD and OSV, and each safe version matches the authoritative GitHub Advisory Database fixed version; see GROUND_TRUTH.md for one-click verification links.",
   "advisories": [
     {
       "id": "pillow-CVE-2026-112398",
@@ -10,7 +10,7 @@
       "query": "pillow CVE-2026-112398 fixed safe version patch",
       "fixed_versions": ["13.0.0"],
       "min_safe": "13.0.0",
-      "ground_truth_source": "https://explore.alas.aws.amazon.com/CVE-2026-112398.html"
+      "ground_truth_source": "https://osv.dev/vulnerability/CVE-2026-112398"
     },
     {
       "id": "brotli-CVE-2026-111497",
@@ -32,7 +32,7 @@
       "query": "pillow CVE-2026-42309 fixed safe version patch",
       "fixed_versions": ["12.2.0"],
       "min_safe": "12.2.0",
-      "ground_truth_source": "https://www.sentinelone.com/vulnerability-database/cve-2026-42309/"
+      "ground_truth_source": "https://osv.dev/vulnerability/CVE-2026-42309"
     },
     {
       "id": "urllib3-CVE-2026-97689",

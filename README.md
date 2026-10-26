@@ -60,6 +60,10 @@ web on and off. Identical model, identical prompt, one switch:
 Without the web the model does not hallucinate a version, it **abstains**: it
 knows it cannot know. Tavily fills exactly that gap.
 
+Every CVE above is real and checkable. [`benchmark/security/GROUND_TRUTH.md`](benchmark/security/GROUND_TRUTH.md)
+links each one to NVD, OSV and the GitHub Advisory Database, and every safe
+version we grade against matches the authoritative fixed version there.
+
 ```bash
 python benchmark/security/run_security_benchmark.py --repeats 3
 ```
