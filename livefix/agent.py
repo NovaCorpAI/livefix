@@ -179,12 +179,15 @@ def _valid_python(files: dict[str, str]) -> bool:
 
 
 class LiveFixAgent:
-    def __init__(self, config, project_dir: str | Path, test_command: str):
+    def __init__(self, config, project_dir: str | Path, test_command: str,
+                 chat: NebiusChat | None = None, search: WebSearch | None = None):
         self.config = config
         self.project_dir = Path(project_dir).resolve()
         self.test_command = test_command
-        self.chat = NebiusChat(config)
-        self.search = WebSearch(config.tavily_api_key)
+        # Reuse the caller's client when given, so one run shares a single
+        # connection and a single token-usage ledger (resolve plus repair).
+        self.chat = chat or NebiusChat(config)
+        self.search = search or WebSearch(config.tavily_api_key)
 
     def _changes_something(self, files: dict[str, str]) -> bool:
         """True if at least one proposed file exists and differs from disk.

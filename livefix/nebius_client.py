@@ -21,6 +21,10 @@ class NebiusChat:
             timeout=180.0,
             max_retries=4,
         )
+        # Cumulative token accounting across a run, so a remediation can report
+        # what it actually cost (model calls are the dominant cost).
+        self.usage = {"calls": 0, "prompt_tokens": 0,
+                      "completion_tokens": 0, "total_tokens": 0}
 
     @property
     def model(self) -> str:
@@ -37,4 +41,10 @@ class NebiusChat:
                 {"role": "user", "content": user},
             ],
         )
+        u = getattr(resp, "usage", None)
+        if u is not None:
+            self.usage["calls"] += 1
+            self.usage["prompt_tokens"] += getattr(u, "prompt_tokens", 0) or 0
+            self.usage["completion_tokens"] += getattr(u, "completion_tokens", 0) or 0
+            self.usage["total_tokens"] += getattr(u, "total_tokens", 0) or 0
         return (resp.choices[0].message.content or "").strip()

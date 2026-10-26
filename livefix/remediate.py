@@ -36,6 +36,18 @@ from .nebius_client import NebiusChat
 from .search import SearchHit, WebSearch
 from .tracing import traceable
 
+# Nebius Token Factory list price for the default Nemotron model, USD per 1M
+# tokens (input, output). Confirm the current rates in your dashboard.
+NEBIUS_PRICE_IN = 0.30
+NEBIUS_PRICE_OUT = 0.90
+
+
+def estimate_cost_usd(usage: dict) -> float:
+    """Estimate the model spend for a run from its token usage ledger."""
+    return (usage.get("prompt_tokens", 0) * NEBIUS_PRICE_IN
+            + usage.get("completion_tokens", 0) * NEBIUS_PRICE_OUT) / 1_000_000
+
+
 _RESOLVE_SYSTEM = (
     "You are a security remediation assistant. Given a Python package and a "
     "vulnerability advisory id, plus optional live web search excerpts, name the "
@@ -191,7 +203,9 @@ class Remediator:
             self._install_manifest(manifest_path)
 
         # Fix whatever the upgrade broke, verified by the project's own tests.
-        repair = LiveFixAgent(self.config, self.project_dir, self.test_command).run()
+        # Share this remediator's client so resolve and repair bill to one ledger.
+        repair = LiveFixAgent(self.config, self.project_dir, self.test_command,
+                              chat=self.chat, search=self.search).run()
         return RemediationResult(advisory, package, res, before, after, repair, repair.passed)
 
 
@@ -241,6 +255,9 @@ def main(argv: list[str] | None = None) -> int:
             "true" if result.passed else "false", encoding="utf-8")
         (emit / "safe_version.txt").write_text(
             result.resolution.safe_version or "", encoding="utf-8")
+        (emit / "usage.json").write_text(json.dumps(
+            {**rem.chat.usage, "est_cost_usd": round(estimate_cost_usd(rem.chat.usage), 5)}),
+            encoding="utf-8")
 
     r = result.resolution
     print("1. Resolve safe version (live web)")
@@ -273,6 +290,10 @@ def main(argv: list[str] | None = None) -> int:
             print(line)
             if it.explanation:
                 print(f"       note: {it.explanation}")
+    u = rem.chat.usage
+    print(f"\nCost: {u['calls']} model call(s), {u['prompt_tokens']} prompt + "
+          f"{u['completion_tokens']} completion tokens "
+          f"(~${estimate_cost_usd(u):.4f} at Nebius list price)")
     print()
     if result.passed:
         print(f"RESULT: {args.advisory} remediated. Pin bumped and tests pass.")

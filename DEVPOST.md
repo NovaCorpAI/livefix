@@ -120,6 +120,13 @@ their board, mean time to remediate: every advisory LiveFix turns green is
 engineer-hours saved and days shaved off an MTTR that regulation (the EU Cyber
 Resilience Act, the SEC disclosure rules) is turning into a hard obligation.
 
+The unit economics are stark, and we measured them on real runs: a one-file
+remediation costs about half a cent or less in model compute (roughly 6,000 to
+9,000 tokens) in about fifteen seconds; a three-file remediation about one cent
+(roughly 22,000 tokens) in about a minute. That is against the one to three
+engineer-hours a breaking security upgrade takes a senior to resolve by hand.
+LiveFix reports the exact tokens and estimated cost on every run.
+
 ## Challenges we ran into
 
 - **Measuring the right thing.** Our first benchmark used well-known API changes
