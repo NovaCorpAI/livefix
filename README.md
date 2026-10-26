@@ -1,60 +1,93 @@
 # LiveFix
 
-**A web-grounded agent that repairs broken code against moving APIs.**
+**An autonomous agent that remediates a vulnerable dependency end to end: it
+resolves the safe version from the live web, bumps the pin, and repairs the code
+the upgrade breaks, verified by your tests.**
 
 Built for the [Nebius x NVIDIA Global AI Hackathon](https://nebiusglobalaihackathon.devpost.com/).
-Runs on **Nebius Token Factory** with an **NVIDIA Nemotron** open model, grounded by
-**Tavily** live web search.
+Runs on **Nebius Token Factory** with an **NVIDIA Nemotron** open model, grounded
+by **Tavily** live web search. Live demo: <https://livefix.novacorplabs.com>.
 
-## The problem
+## The problem: a security bump is two walls, not one
 
-Most "AI fixes my code" tools fail on the breakages that matter most: the ones
-that happened *after* the model's training cutoff. A dependency drops a function,
-a framework renames an argument, a cloud SDK changes its auth flow. The model has
-never seen the new API, so it confidently writes the old one back.
+A scanner tells you a dependency has a CVE. Dependabot and friends open a
+version-bump PR and stop. Two walls keep that PR from ever turning green:
 
-## How LiveFix solves it
+1. **The fact.** Which version is even safe? A CVE disclosed this month
+   post-dates every model's training cutoff, so a plain model cannot know the
+   fixed version. The honest ones say so; the rest guess.
+2. **The break.** The safe version is often a major release that removed an API
+   you used, so the upgrade that closes the CVE turns your tests red, and the PR
+   rots unmerged.
 
-LiveFix closes that gap by putting the live web in the loop:
+LiveFix is the piece that closes both.
 
-1. **Run** the failing test and capture the traceback.
-2. **Locate** the project file named in the traceback (with a path-escape guard,
-   so it never touches files outside the project).
-3. **Search** the web with Tavily for the current migration or fix, using the
-   exception line as the query. This is the step a plain LLM cannot do.
-4. **Repair**: hand the traceback, the current file contents, and the web
-   excerpts to Nemotron on Nebius Token Factory, and ask for the complete new
-   file content.
-5. **Re-run** the test. Loop until it passes or the budget is spent.
+## How it works
 
-The web excerpts are what let Nemotron apply a fix it was never trained on.
+```
+python -m livefix.remediate \
+  --project examples/vulnerable_project \
+  --package pillow --advisory CVE-2026-112398 \
+  --test "python -m pytest -q"
+```
+
+1. **Resolve** (Tavily): search the live web for the advisory and read off the
+   minimal safe version. This is the fact the weights cannot hold.
+2. **Bump**: pin the dependency to that version in the manifest.
+3. **Repair** (Nemotron on Nebius): run the LiveFix repair loop to rewrite
+   whatever the upgrade broke, grounded in the current docs.
+4. **Verify**: re-run the project's own tests, looping until green or the budget
+   is spent. A path-escape guard keeps every write inside the project.
+
+The result is a green, merge-ready change instead of a red bump PR.
 
 ## Why this is a good use of Tavily
 
-The repair is only as current as the search. Tavily's `search_depth="advanced"`
-pulls the up-to-date docs, changelogs, and migration notes that pin the exact
-replacement API, so the model's edit is grounded in today's reality instead of
-its training-time memory. Turn the search off and LiveFix degrades to a
-guess-from-memory patcher; turn it on and it fixes post-cutoff breakages.
+The load-bearing step is the one a model provably cannot do from memory: name the
+safe version for a freshly disclosed CVE. We measured it. [`benchmark/security/`](benchmark/security/)
+gives the same Nemotron model five real, 2026-disclosed CVEs, across two
+ecosystems (PyPI and npm), and asks for the minimal safe version, with the live
+web on and off. Identical model, identical prompt, one switch:
 
-## Does the web search actually help? (benchmark)
+| Advisory (2026) | Package | Ecosystem | Web ON | Web OFF |
+| --- | --- | --- | --- | --- |
+| CVE-2026-112398 (critical RCE) | pillow | PyPI | 3/3 | 0/3 (abstained) |
+| CVE-2026-111497 (Brotli decoder RCE) | brotli | PyPI | 3/3 | 0/3 (abstained) |
+| CVE-2026-42309 (heap overflow) | pillow | PyPI | 3/3 | 0/3 (abstained) |
+| CVE-2026-97689 (chunk-size buffering) | urllib3 | PyPI | 3/3 | 0/3 (abstained) |
+| CVE-2026-59873 (decompression DoS) | tar | npm | 3/3 | 0/3 (abstained) |
 
-That last claim is measurable, so we measure it. [`benchmark/`](benchmark/) holds
-five cases, each a failing test caused by a real, documented API change that
-post-dates common model cutoffs (`np.float` removed in NumPy 1.24,
-`DataFrame.append` in pandas 2.0, `BaseSettings` moved in Pydantic v2,
-`Markup` removed from `flask` in 3.1, `collections.Mapping` in Python 3.10). The
-harness runs the identical loop with Tavily ON and OFF and reports the repair
-rate for each. The gap is the value the web grounding adds.
+Without the web the model does not hallucinate a version, it **abstains**: it
+knows it cannot know. Tavily fills exactly that gap.
+
+```bash
+python benchmark/security/run_security_benchmark.py --repeats 3
+```
+
+## An honest note on where the web helps
+
+We only claim the web where it earns its place. We also measured the *code* repair
+step on its own ([`benchmark/`](benchmark/), five pre-cutoff breakages like
+`np.float` and `DataFrame.append`), and a strong model repairs those with or
+without search, because it already knows those APIs. So the web's decisive,
+un-fakeable contribution is the post-cutoff **fact** (the safe version, the fresh
+advisory), not out-reasoning the model on code it already understands. The repair
+loop still benefits from current docs on genuinely novel breakages, and it is
+what turns the security bump green, but we do not overclaim it.
 
 ```bash
 pip install -r requirements.txt -r benchmark/requirements.txt
 python benchmark/run_benchmark.py --self-test   # validate the harness offline, no keys
-python benchmark/run_benchmark.py --repeats 3   # the real measurement
+python benchmark/run_benchmark.py --repeats 3   # the code-repair measurement
 ```
 
-See [benchmark/README.md](benchmark/README.md) for the method and how to read the
-result.
+## Repair-only mode
+
+The repair loop also runs on its own, for any failing test (no CVE required):
+
+```bash
+python -m livefix --project examples/broken_project --test "python -m pytest -q"
+```
 
 ## Quick start
 
@@ -64,13 +97,40 @@ pip install -r requirements.txt
 cp .env.example .env        # fill in NEBIUS_API_KEY and TAVILY_API_KEY
 set -a; . ./.env; set +a    # load them into the environment
 
-# Repair the bundled broken example (uses a removed stdlib import):
-python -m livefix --project examples/broken_project --test "python -m pytest -q"
+# Remediate the bundled vulnerable example (CVE-2026-112398 in a pinned Pillow):
+python -m livefix.remediate --project examples/vulnerable_project \
+  --package pillow --advisory CVE-2026-112398 --test "python -m pytest -q"
 ```
 
-Expected: LiveFix finds `from collections import Mapping` (removed in Python
-3.10), searches for the current import, rewrites it to
-`from collections.abc import Mapping`, and the test turns green.
+Expected: LiveFix resolves Pillow's safe version (13.0.0) from the live web,
+bumps `pillow==12.3.0` to `pillow>=13.0.0`, and repairs the code the upgrade
+broke (`ImageCmsProfile.product_name`, removed in Pillow 13, becomes
+`ImageCms.getProfileName`), and the test turns green.
+
+## Run it as a GitHub Action
+
+LiveFix ships as a reusable action (`action.yml`), so a scanner alert can open a
+verified remediation PR with no human in the loop:
+
+```yaml
+- uses: novacorp-labs/livefix@v1
+  env:
+    NEBIUS_API_KEY: ${{ secrets.NEBIUS_API_KEY }}
+    TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+  with:
+    package: pillow
+    advisory: CVE-2026-112398
+    test: python -m pytest -q
+```
+
+The PR it opens carries an honest signature: a one-line summary, a collapsed
+"what LiveFix did" block (the resolved version and its source, the bump, the
+repair, and the LangSmith trace), a machine-readable commit trailer, and a
+`LiveFix / remediation-verified` check that goes green only when the project's
+tests pass. It says the change was *remediated and verified by tests*, never that
+a human reviewed it. A rendered example is in
+[`examples/sample_remediation_pr.md`](examples/sample_remediation_pr.md), and a
+full workflow in [`.github/workflows/livefix-remediate.yml`](.github/workflows/livefix-remediate.yml).
 
 ## Configuration
 
@@ -88,12 +148,12 @@ your dashboard when you create the key.
 
 ## Tracing (LangSmith, optional)
 
-Each run is a loop of a Tavily search and a Nemotron completion per iteration, so
-when a repair goes wrong you want to see those steps. Set `LANGSMITH_TRACING=true`
-and `LANGSMITH_API_KEY=...` and every run, model call, and search call is traced
-to LangSmith under the `LANGSMITH_PROJECT` project. With the flag or key unset,
-tracing is a transparent no-op and LangSmith is not even imported, so LiveFix has
-no hard dependency on it.
+Each run is a loop of a Tavily search and a Nemotron completion, plus the version
+resolve, so when a remediation goes wrong you want to see those steps. Set
+`LANGSMITH_TRACING=true` and `LANGSMITH_API_KEY=...` and every run, model call,
+search, and resolve is traced to LangSmith under the `LANGSMITH_PROJECT` project.
+With the flag or key unset, tracing is a transparent no-op and LangSmith is not
+even imported, so LiveFix has no hard dependency on it.
 
 ## Tests
 

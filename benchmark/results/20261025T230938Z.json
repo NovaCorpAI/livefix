@@ -1,0 +1,48 @@
+{
+  "generated_utc": "20261025T230938Z",
+  "repeats": 2,
+  "conditions": [
+    "on",
+    "off"
+  ],
+  "rows": [
+    {
+      "case": "pillow_imagecms",
+      "library": "pillow",
+      "runs": {
+        "on": [
+          {
+            "passed": false,
+            "started_red": true,
+            "iterations": 1,
+            "used_search": true,
+            "elapsed_s": 9.3
+          },
+          {
+            "passed": false,
+            "started_red": true,
+            "iterations": 1,
+            "used_search": true,
+            "elapsed_s": 5.0
+          }
+        ],
+        "off": [
+          {
+            "passed": false,
+            "started_red": true,
+            "iterations": 1,
+            "used_search": false,
+            "elapsed_s": 3.7
+          },
+          {
+            "passed": false,
+            "started_red": true,
+            "iterations": 1,
+            "used_search": false,
+            "elapsed_s": 4.0
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "generated_utc": "20261025T222933Z",
+  "repeats": 1,
+  "conditions": [
+    "on"
+  ],
+  "rows": [
+    {
+      "case": "py310_collections",
+      "library": "stdlib (Python)",
+      "runs": {
+        "on": [
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": true,
+            "elapsed_s": 11.8
+          }
+        ]
+      }
+    }
+  ]
+}

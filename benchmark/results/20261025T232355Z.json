@@ -1,0 +1,76 @@
+{
+  "generated_utc": "20261025T232355Z",
+  "repeats": 4,
+  "conditions": [
+    "on",
+    "off"
+  ],
+  "rows": [
+    {
+      "case": "pillow_imagecms",
+      "library": "pillow",
+      "runs": {
+        "on": [
+          {
+            "passed": false,
+            "started_red": true,
+            "iterations": 1,
+            "used_search": true,
+            "elapsed_s": 22.0
+          },
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": true,
+            "elapsed_s": 20.6
+          },
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": true,
+            "elapsed_s": 21.1
+          },
+          {
+            "passed": false,
+            "started_red": true,
+            "iterations": 1,
+            "used_search": true,
+            "elapsed_s": 21.2
+          }
+        ],
+        "off": [
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 4,
+            "used_search": false,
+            "elapsed_s": 64.5
+          },
+          {
+            "passed": false,
+            "started_red": true,
+            "iterations": 1,
+            "used_search": false,
+            "elapsed_s": 20.5
+          },
+          {
+            "passed": false,
+            "started_red": true,
+            "iterations": 4,
+            "used_search": false,
+            "elapsed_s": 42.7
+          },
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 3,
+            "used_search": false,
+            "elapsed_s": 21.3
+          }
+        ]
+      }
+    }
+  ]
+}

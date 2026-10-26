@@ -1,0 +1,71 @@
+name: LiveFix remediation
+
+# Trigger it by hand for now; the goal is to wire this to a scanner alert
+# (for example a Dependabot alert webhook or a scheduled `pip-audit`) so a CVE
+# opens a verified, merge-ready remediation PR on its own.
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: "Vulnerable package name"
+        required: true
+      advisory:
+        description: "CVE or GHSA id"
+        required: true
+      test:
+        description: "Test command"
+        required: false
+        default: "python -m pytest -q"
+      note:
+        description: "Short advisory description"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  remediate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the project
+        uses: actions/checkout@v4
+
+      - name: LiveFix remediate
+        id: fix
+        # Inside this repo use `./`; from another repo use `novacorp-labs/livefix@v1`.
+        uses: ./
+        env:
+          NEBIUS_API_KEY: ${{ secrets.NEBIUS_API_KEY }}
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+        with:
+          package: ${{ github.event.inputs.package }}
+          advisory: ${{ github.event.inputs.advisory }}
+          test: ${{ github.event.inputs.test }}
+          note: ${{ github.event.inputs.note }}
+
+      - name: Compose the signed commit message
+        if: steps.fix.outputs.verified == 'true'
+        id: msg
+        shell: bash
+        run: |
+          {
+            echo "message<<LIVEFIX_EOF"
+            echo "${{ steps.fix.outputs.pr-title }}"
+            echo ""
+            cat "${{ steps.fix.outputs.commit-trailer-file }}"
+            echo "LIVEFIX_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Open the remediation pull request
+        if: steps.fix.outputs.verified == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: livefix/${{ github.event.inputs.advisory }}
+          title: ${{ steps.fix.outputs.pr-title }}
+          body-path: ${{ steps.fix.outputs.pr-body-file }}
+          commit-message: ${{ steps.msg.outputs.message }}
+          labels: |
+            security
+            livefix

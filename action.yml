@@ -1,0 +1,98 @@
+name: "LiveFix security remediation"
+description: "Resolve a CVE's safe version from the live web, bump the pin, repair what the upgrade breaks, verified by your tests. By NovaCorp Labs."
+author: "NovaCorp Labs"
+branding:
+  icon: "shield"
+  color: "green"
+
+inputs:
+  package:
+    description: "Vulnerable package name."
+    required: true
+  advisory:
+    description: "CVE or GHSA id."
+    required: true
+  test:
+    description: "Command that runs the project's tests."
+    required: false
+    default: "python -m pytest -q"
+  note:
+    description: "Short advisory description (optional)."
+    required: false
+    default: ""
+  manifest:
+    description: "Dependency manifest filename."
+    required: false
+    default: "requirements.txt"
+  project:
+    description: "Project directory to remediate."
+    required: false
+    default: "."
+  python-version:
+    description: "Python version to run on."
+    required: false
+    default: "3.12"
+
+outputs:
+  verified:
+    description: "true if the project's tests pass after remediation."
+    value: ${{ steps.livefix.outputs.verified }}
+  safe-version:
+    description: "The safe version resolved from the live web (empty if none)."
+    value: ${{ steps.livefix.outputs.safe-version }}
+  pr-title:
+    description: "The generated pull request title."
+    value: ${{ steps.livefix.outputs.pr-title }}
+  pr-body-file:
+    description: "Path to the generated pull request body (markdown)."
+    value: ${{ steps.livefix.outputs.pr-body-file }}
+  commit-trailer-file:
+    description: "Path to the generated commit trailer block."
+    value: ${{ steps.livefix.outputs.commit-trailer-file }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install LiveFix
+      shell: bash
+      run: pip install -r "$GITHUB_ACTION_PATH/requirements.txt"
+
+    - name: Remediate
+      id: livefix
+      shell: bash
+      env:
+        PYTHONPATH: ${{ github.action_path }}
+        NEBIUS_API_KEY: ${{ env.NEBIUS_API_KEY }}
+        TAVILY_API_KEY: ${{ env.TAVILY_API_KEY }}
+        LANGSMITH_TRACING: ${{ env.LANGSMITH_TRACING }}
+        LANGSMITH_API_KEY: ${{ env.LANGSMITH_API_KEY }}
+      run: |
+        set -uo pipefail
+        emit="$(mktemp -d)"
+        python -m livefix.remediate \
+          --project "${{ inputs.project }}" \
+          --package "${{ inputs.package }}" \
+          --advisory "${{ inputs.advisory }}" \
+          --note "${{ inputs.note }}" \
+          --manifest "${{ inputs.manifest }}" \
+          --test "${{ inputs.test }}" \
+          --emit-dir "$emit" || true
+        verified="$(cat "$emit/verified.txt" 2>/dev/null || echo false)"
+        {
+          echo "verified=$verified"
+          echo "safe-version=$(cat "$emit/safe_version.txt" 2>/dev/null || echo '')"
+          echo "pr-title=$(cat "$emit/pr_title.txt" 2>/dev/null || echo 'LiveFix remediation')"
+          echo "pr-body-file=$emit/pr_body.md"
+          echo "commit-trailer-file=$emit/commit_trailer.txt"
+        } >> "$GITHUB_OUTPUT"
+        # This step IS the `LiveFix / remediation-verified` check: it fails,
+        # honestly, when the tests did not pass after the remediation.
+        if [ "$verified" != "true" ]; then
+          echo "::error::LiveFix could not land a verified remediation for ${{ inputs.advisory }}."
+          exit 1
+        fi

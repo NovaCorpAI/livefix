@@ -1,0 +1,148 @@
+{
+  "generated_utc": "20261026T002331Z",
+  "repeats": 3,
+  "conditions": [
+    "on",
+    "off"
+  ],
+  "rows": [
+    {
+      "id": "pillow-CVE-2026-112398",
+      "package": "pillow",
+      "results": {
+        "on": [
+          {
+            "grade": "fixed",
+            "safe_version": "13.0.0",
+            "confident": true,
+            "n_hits": 5
+          },
+          {
+            "grade": "fixed",
+            "safe_version": "13.0.0",
+            "confident": true,
+            "n_hits": 5
+          },
+          {
+            "grade": "fixed",
+            "safe_version": "13.0.0",
+            "confident": true,
+            "n_hits": 5
+          }
+        ],
+        "off": [
+          {
+            "grade": "abstained",
+            "safe_version": null,
+            "confident": false,
+            "n_hits": 0
+          },
+          {
+            "grade": "abstained",
+            "safe_version": null,
+            "confident": false,
+            "n_hits": 0
+          },
+          {
+            "grade": "abstained",
+            "safe_version": null,
+            "confident": false,
+            "n_hits": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "brotli-CVE-2026-111497",
+      "package": "brotli",
+      "results": {
+        "on": [
+          {
+            "grade": "fixed",
+            "safe_version": "1.2.1",
+            "confident": true,
+            "n_hits": 5
+          },
+          {
+            "grade": "fixed",
+            "safe_version": "1.0.10",
+            "confident": true,
+            "n_hits": 5
+          },
+          {
+            "grade": "fixed",
+            "safe_version": "1.0.10",
+            "confident": true,
+            "n_hits": 5
+          }
+        ],
+        "off": [
+          {
+            "grade": "abstained",
+            "safe_version": null,
+            "confident": false,
+            "n_hits": 0
+          },
+          {
+            "grade": "abstained",
+            "safe_version": null,
+            "confident": false,
+            "n_hits": 0
+          },
+          {
+            "grade": "abstained",
+            "safe_version": null,
+            "confident": false,
+            "n_hits": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "certifi-GHSA-6q48-6c7w-9gw2",
+      "package": "certifi",
+      "results": {
+        "on": [
+          {
+            "grade": "wrong",
+            "safe_version": "2026.10.18",
+            "confident": true,
+            "n_hits": 5
+          },
+          {
+            "grade": "wrong",
+            "safe_version": "2026.10.18",
+            "confident": true,
+            "n_hits": 5
+          },
+          {
+            "grade": "wrong",
+            "safe_version": "2026.10.18",
+            "confident": true,
+            "n_hits": 5
+          }
+        ],
+        "off": [
+          {
+            "grade": "abstained",
+            "safe_version": null,
+            "confident": false,
+            "n_hits": 0
+          },
+          {
+            "grade": "abstained",
+            "safe_version": null,
+            "confident": false,
+            "n_hits": 0
+          },
+          {
+            "grade": "abstained",
+            "safe_version": null,
+            "confident": false,
+            "n_hits": 0
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "_about": "Real dependency vulnerabilities (PyPI and npm) disclosed in 2026, after any current model's training cutoff. The remediation task is to name the minimal SAFE version to upgrade to. The model is given only the package name, its ecosystem and the advisory id (plus live web results when web is ON); it never sees this file. `fixed_versions` and `min_safe` are the ground truth, taken from advisory databases, used only to grade the answer. A package with several maintained branches has several valid fixes, so grading accepts any version in `fixed_versions` or any version >= `min_safe`.",
+  "advisories": [
+    {
+      "id": "pillow-CVE-2026-112398",
+      "package": "pillow",
+      "ecosystem": "PyPI",
+      "advisory": "CVE-2026-112398",
+      "note": "Critical remote code execution via a crafted image",
+      "query": "pillow CVE-2026-112398 fixed safe version patch",
+      "fixed_versions": ["13.0.0"],
+      "min_safe": "13.0.0",
+      "ground_truth_source": "https://explore.alas.aws.amazon.com/CVE-2026-112398.html"
+    },
+    {
+      "id": "brotli-CVE-2026-111497",
+      "package": "brotli",
+      "ecosystem": "PyPI",
+      "advisory": "CVE-2026-111497",
+      "note": "Brotli decoder out-of-bounds write (Node2Shell / HTTP2Shell), reachable via urllib3/requests",
+      "query": "brotli CVE-2026-111497 fixed safe version patch python",
+      "fixed_versions": ["1.0.10", "1.1.1", "1.2.1"],
+      "min_safe": "1.2.1",
+      "ground_truth_source": "https://github.com/advisories/GHSA-9v8h-qqgm-4m35"
+    },
+    {
+      "id": "pillow-CVE-2026-42309",
+      "package": "pillow",
+      "ecosystem": "PyPI",
+      "advisory": "CVE-2026-42309",
+      "note": "Heap buffer overflow with nested-list coordinates",
+      "query": "pillow CVE-2026-42309 fixed safe version patch",
+      "fixed_versions": ["12.2.0"],
+      "min_safe": "12.2.0",
+      "ground_truth_source": "https://www.sentinelone.com/vulnerability-database/cve-2026-42309/"
+    },
+    {
+      "id": "urllib3-CVE-2026-97689",
+      "package": "urllib3",
+      "ecosystem": "PyPI",
+      "advisory": "CVE-2026-97689",
+      "note": "Unbounded chunk-size buffering in chunked transfer decoding (high)",
+      "query": "urllib3 CVE-2026-97689 fixed safe version patch python",
+      "fixed_versions": ["2.8.0"],
+      "min_safe": "2.8.0",
+      "ground_truth_source": "https://osv.dev/vulnerability/CVE-2026-97689"
+    },
+    {
+      "id": "tar-CVE-2026-59873",
+      "package": "tar",
+      "ecosystem": "npm",
+      "advisory": "CVE-2026-59873",
+      "note": "Decompression denial of service via a crafted archive in node-tar",
+      "query": "node-tar CVE-2026-59873 GHSA-23hp-3jrh-7fpw npm fixed patched version",
+      "fixed_versions": ["7.5.19"],
+      "min_safe": "7.5.19",
+      "ground_truth_source": "https://github.com/advisories/GHSA-23hp-3jrh-7fpw"
+    }
+  ]
+}

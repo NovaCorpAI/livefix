@@ -1,0 +1,62 @@
+{
+  "generated_utc": "20261025T231453Z",
+  "repeats": 3,
+  "conditions": [
+    "on",
+    "off"
+  ],
+  "rows": [
+    {
+      "case": "pillow_imagecms",
+      "library": "pillow",
+      "runs": {
+        "on": [
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": true,
+            "elapsed_s": 14.1
+          },
+          {
+            "passed": false,
+            "started_red": true,
+            "iterations": 1,
+            "used_search": true,
+            "elapsed_s": 13.6
+          },
+          {
+            "passed": false,
+            "started_red": true,
+            "iterations": 1,
+            "used_search": true,
+            "elapsed_s": 11.7
+          }
+        ],
+        "off": [
+          {
+            "passed": false,
+            "started_red": true,
+            "iterations": 1,
+            "used_search": false,
+            "elapsed_s": 22.7
+          },
+          {
+            "passed": false,
+            "started_red": true,
+            "iterations": 1,
+            "used_search": false,
+            "elapsed_s": 31.5
+          },
+          {
+            "passed": false,
+            "started_red": true,
+            "iterations": 1,
+            "used_search": false,
+            "elapsed_s": 17.9
+          }
+        ]
+      }
+    }
+  ]
+}

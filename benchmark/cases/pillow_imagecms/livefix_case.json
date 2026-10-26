@@ -1,0 +1,9 @@
+{
+  "title": "ImageCmsProfile.product_name removed in Pillow 13.0.0",
+  "description": "Pillow 13.0.0 (released 2026-10-16, the security release for CVE-2026-112398 and other critical RCEs) removed the ImageCmsProfile.product_name / product_info attributes. Code that upgraded for the CVE now raises AttributeError.",
+  "library": "pillow",
+  "test_command": "python -m pytest -q",
+  "max_iters": 4,
+  "web_dependent": true,
+  "extra_requirements": ["pillow>=13.0.0"]
+}

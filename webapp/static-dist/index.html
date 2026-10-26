@@ -2,23 +2,30 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>LiveFix: self-healing code</title>
-<meta name="description" content="LiveFix is a web-grounded agent that repairs broken code against moving APIs: a failing test goes in, Tavily finds the current fix on the live web, an NVIDIA Nemotron model on Nebius Token Factory rewrites the code, and the test comes out green." />
-<meta property="og:title" content="LiveFix: self-healing code" />
-<meta property="og:description" content="A failing test goes in; Tavily finds the current fix on the live web, NVIDIA Nemotron on Nebius rewrites the code, and the test comes out green." />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>LiveFix: self-healing security upgrades</title>
+<meta name="description" content="LiveFix remediates a vulnerable dependency end to end: it resolves the safe version from the live web (a fact newer than any model), bumps the pin, and repairs the code the upgrade breaks, verified by your tests, on Nebius Token Factory with an NVIDIA Nemotron model grounded by Tavily." />
+<meta property="og:title" content="LiveFix: self-healing security upgrades" />
+<meta property="og:description" content="The security bump that fixes the CVE and keeps your build green: resolve the safe version from the live web, bump it, and repair what breaks, verified by tests." />
 <meta property="og:type" content="website" />
 <meta name="theme-color" content="#0b0e14" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" />
 <style>
+  /* A security case file for one remediation, narrated top to bottom; dark developer-tool world. */
   :root {
     --bg: #0b0e14;
     --panel: #121722;
     --panel-2: #0e131c;
     --border: #212838;
+    --border-2: #2c3547;
     --text: #e6eaf2;
     --muted: #8a94a7;
-    --accent: #7c9cff;
-    --accent-2: #00d4a0;
+    --muted-2: #6b7688;
+    --accent: #7c9cff;      /* Nebius */
+    --nvidia: #76b900;      /* NVIDIA */
+    --accent-2: #00d4a0;    /* Tavily */
     --red: #ff5c73;
     --green: #27d796;
     --amber: #ffbf5c;
@@ -27,53 +34,84 @@
     --del: #3a1420;
     --del-text: #ff8ba0;
     --radius: 14px;
+    --font-display: "Sora", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    color-scheme: dark;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
   body {
-    background: radial-gradient(1200px 600px at 70% -10%, #16203a 0%, var(--bg) 55%) fixed;
+    background:
+      radial-gradient(900px 500px at 78% -8%, rgba(124,156,255,.14) 0%, transparent 60%),
+      radial-gradient(700px 500px at 5% 2%, rgba(0,212,160,.08) 0%, transparent 55%),
+      var(--bg);
+    background-attachment: fixed;
     color: var(--text);
-    font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font: 15.5px/1.6 var(--font-body);
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 880px; margin: 0 auto; padding: 40px 16px 80px; }
-  header .kicker { color: var(--accent-2); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; font-size: 12px; }
-  h1 { font-size: 34px; margin: 6px 0 8px; letter-spacing: -.02em; }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 0 max(18px, env(safe-area-inset-left, 0px)) 90px max(18px, env(safe-area-inset-right, 0px)); }
+  a { color: var(--accent); }
+
+  .js-reveal .reveal { opacity: 0; transform: translateY(16px); }
+  .js-reveal .reveal.in { opacity: 1; transform: none; transition: opacity .6s ease, transform .6s cubic-bezier(.2,.7,.2,1); }
+
+  section { padding-top: 46px; }
+  .eyebrow { font-family: var(--font-mono); color: var(--accent-2); font-weight: 500; letter-spacing: .14em; text-transform: uppercase; font-size: 11.5px; margin: 0 0 10px; }
+  h2 { font-family: var(--font-display); font-weight: 700; font-size: 25px; letter-spacing: -.02em; margin: 0 0 12px; text-wrap: balance; }
+  .lede { color: var(--muted); font-size: 15.5px; max-width: 65ch; margin: 0; }
+  .lede + .lede { margin-top: 12px; }
+  strong, b { color: var(--text); font-weight: 600; }
+  code { font-family: var(--font-mono); color: var(--accent); font-size: .92em; }
+
+  header.hero { padding: 56px 0 8px; }
+  .kicker { font-family: var(--font-mono); color: var(--accent-2); font-weight: 500; letter-spacing: .12em; text-transform: uppercase; font-size: 12px; margin: 0 0 14px; }
+  h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(42px, 9vw, 72px); line-height: .98; letter-spacing: -.035em; margin: 0 0 4px; }
   h1 .fix { color: var(--accent); }
-  .tagline { color: var(--muted); font-size: 16px; margin: 0 0 18px; max-width: 620px; }
-  .stack { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
-  .chip {
-    display: inline-flex; align-items: center; gap: 7px;
-    background: var(--panel); border: 1px solid var(--border);
-    border-radius: 999px; padding: 6px 12px; font-size: 13px; color: var(--text);
-  }
+  .hero .hook { font-family: var(--font-display); font-weight: 600; font-size: clamp(18px, 3.4vw, 23px); letter-spacing: -.01em; color: var(--text); margin: 14px 0 0; max-width: 24ch; text-wrap: balance; }
+  .hero .tagline { color: var(--muted); font-size: 16px; margin: 16px 0 0; max-width: 62ch; }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin: 26px 0 26px; }
+  .btn { font: 600 15px var(--font-display); border-radius: 11px; padding: 12px 20px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 9px; border: 1px solid transparent; transition: transform .08s ease, filter .15s ease, border-color .15s ease, background .15s ease; }
+  .btn.primary { background: linear-gradient(180deg, #8aa6ff, #5e7cf0); color: #0b0e14; }
+  .btn.primary:hover { filter: brightness(1.07); }
+  .btn.primary:active { transform: translateY(1px); }
+  .btn.ghost { background: var(--panel); color: var(--text); border-color: var(--border-2); }
+  .btn.ghost:hover { border-color: var(--accent); }
+  .stack { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { display: inline-flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--border); border-radius: 999px; padding: 7px 13px; font-size: 13px; }
   .chip .dot { width: 8px; height: 8px; border-radius: 50%; }
-  .card {
-    background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
-    border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 20px; margin-bottom: 18px;
-  }
-  .case-title { font-weight: 650; font-size: 17px; margin: 0 0 4px; }
-  .case-desc { color: var(--muted); margin: 0 0 16px; font-size: 14px; }
-  select, button { font: inherit; }
-  select {
-    background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
-    border-radius: 10px; padding: 10px 12px; width: 100%; margin-bottom: 14px;
-  }
-  .run-btn {
-    background: linear-gradient(180deg, #7c9cff, #5e7cf0); color: #0b0e14;
-    border: 0; border-radius: 10px; padding: 12px 20px; font-weight: 700;
-    cursor: pointer; transition: transform .08s ease, filter .15s ease;
-  }
-  .run-btn:hover { filter: brightness(1.07); }
-  .run-btn:active { transform: translateY(1px); }
-  .run-btn:disabled { opacity: .55; cursor: not-allowed; filter: grayscale(.3); }
-  .status-row { display: flex; align-items: center; gap: 12px; margin: 4px 0 18px; min-height: 30px; }
-  .pill {
-    display: inline-flex; align-items: center; gap: 8px; font-weight: 650; font-size: 14px;
-    border-radius: 999px; padding: 7px 14px; border: 1px solid transparent;
-    transition: background .4s ease, color .4s ease, border-color .4s ease;
-  }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 30px; }
+  .stat { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .stat .big { font-family: var(--font-display); font-weight: 700; font-size: 30px; letter-spacing: -.02em; line-height: 1; }
+  .stat .big .slash { color: var(--muted-2); font-weight: 600; }
+  .stat .lab { color: var(--muted); font-size: 13px; margin-top: 7px; }
+
+  .card { background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .wall { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .wall h4 { font-family: var(--font-display); font-size: 15px; font-weight: 600; margin: 0 0 6px; }
+  .wall p { margin: 0; color: var(--muted); font-size: 13.5px; }
+  .wall .tagline2 { font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--red); margin-bottom: 9px; }
+
+  /* benchmark table */
+  .bench-table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 4px; overflow: hidden; border-radius: 12px; border: 1px solid var(--border); }
+  .bench-table th, .bench-table td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--border); }
+  .bench-table thead th { font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--panel-2); font-weight: 500; }
+  .bench-table tbody tr:last-child td { border-bottom: 0; }
+  .bench-table .cve { font-family: var(--font-mono); font-size: 12.5px; color: var(--text); }
+  .bench-table .sub { color: var(--muted); font-size: 12px; }
+  .bench-table .on { color: var(--green); font-weight: 700; font-family: var(--font-mono); }
+  .bench-table .off { color: var(--muted); font-weight: 600; font-family: var(--font-mono); }
+  .bench-table .off small { color: var(--muted-2); font-weight: 400; }
+  .bench-wrap { overflow-x: auto; }
+  .honest { margin-top: 14px; color: var(--muted); font-size: 13.5px; border-left: 3px solid var(--accent-2); padding-left: 12px; }
+  .honest b { color: var(--text); }
+
+  .pill { display: inline-flex; align-items: center; gap: 8px; font-weight: 650; font-size: 13.5px; border-radius: 999px; padding: 7px 14px; border: 1px solid transparent; }
   .pill .dot { width: 9px; height: 9px; border-radius: 50%; }
   .pill.red { background: rgba(255,92,115,.12); color: var(--red); border-color: rgba(255,92,115,.35); }
   .pill.red .dot { background: var(--red); }
@@ -82,96 +120,272 @@
   .pill.run { background: rgba(255,191,92,.12); color: var(--amber); border-color: rgba(255,191,92,.35); }
   .pill.run .dot { background: var(--amber); animation: pulse 1s infinite; }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
-  .arrow { color: var(--muted); }
-  .meta { color: var(--muted); font-size: 13px; }
-  .iter { border-left: 2px solid var(--border); padding: 2px 0 10px 18px; margin-left: 6px; position: relative; opacity: 0; transform: translateY(6px); animation: rise .4s forwards; }
+
+  /* the loop */
+  .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .flow .step { position: relative; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px 14px; }
+  .flow .step .n { font-family: var(--font-mono); font-weight: 700; font-size: 12px; color: var(--muted); }
+  .flow .step h4 { font-family: var(--font-display); font-size: 15px; font-weight: 600; margin: 8px 0 6px; letter-spacing: -.01em; }
+  .flow .step p { margin: 0; color: var(--muted); font-size: 13px; }
+  .flow .step .svc { display: inline-block; margin-top: 10px; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; padding: 3px 8px; border-radius: 6px; border: 1px solid var(--border-2); color: var(--muted); }
+  .flow .step.tavily { border-color: rgba(0,212,160,.4); }
+  .flow .step.tavily .svc { color: var(--accent-2); border-color: rgba(0,212,160,.4); }
+  .flow .step.model { border-color: rgba(118,185,0,.45); }
+  .flow .step.model .svc { color: var(--nvidia); border-color: rgba(118,185,0,.45); }
+  .safety { margin-top: 14px; color: var(--muted); font-size: 13.5px; }
+  .safety b { color: var(--text); }
+
+  /* demo */
+  .run-btn { font: 700 15px var(--font-display); background: linear-gradient(180deg, #8aa6ff, #5e7cf0); color: #0b0e14; border: 0; border-radius: 10px; padding: 12px 22px; cursor: pointer; transition: transform .08s ease, filter .15s ease; }
+  .run-btn:hover { filter: brightness(1.07); }
+  .run-btn:active { transform: translateY(1px); }
+  .run-btn:disabled { opacity: .55; cursor: not-allowed; filter: grayscale(.3); }
+  .alert-box { display: flex; align-items: flex-start; gap: 11px; background: var(--panel-2); border: 1px solid rgba(255,92,115,.25); border-left: 3px solid var(--red); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; }
+  .alert-box .cve-badge { font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; color: var(--red); border: 1px solid rgba(255,92,115,.4); border-radius: 5px; padding: 2px 7px; flex: none; margin-top: 1px; }
+  .alert-box .txt { font-size: 13.5px; }
+  .alert-box .txt b { color: var(--text); }
+  .alert-box .txt .meta { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  .phase { border-left: 2px solid var(--border); padding: 2px 0 14px 18px; margin-left: 6px; position: relative; opacity: 0; transform: translateY(6px); animation: rise .4s forwards; }
   @keyframes rise { to { opacity: 1; transform: none; } }
-  .iter::before { content: ""; position: absolute; left: -7px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--panel); border: 2px solid var(--accent); }
-  .iter.ok::before { border-color: var(--green); background: var(--green); }
-  .iter-head { font-weight: 650; margin-bottom: 8px; }
-  .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; margin: 12px 0 6px; }
-  .err { background: #1a0f16; border: 1px solid rgba(255,92,115,.25); color: #ffb3c0; border-radius: 8px; padding: 9px 12px; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; white-space: pre-wrap; word-break: break-word; }
+  .phase::before { content: ""; position: absolute; left: -8px; top: 3px; width: 13px; height: 13px; border-radius: 50%; background: var(--panel); border: 2px solid var(--accent); }
+  .phase.tavily::before { border-color: var(--accent-2); }
+  .phase.model::before { border-color: var(--nvidia); }
+  .phase.ok::before { border-color: var(--green); background: var(--green); }
+  .phase-head { font-family: var(--font-display); font-weight: 650; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .phase-head .tag { font-family: var(--font-mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; padding: 2px 7px; border-radius: 5px; border: 1px solid var(--border-2); color: var(--muted); font-weight: 500; }
+  .phase-head .tag.tv { color: var(--accent-2); border-color: rgba(0,212,160,.4); }
+  .phase-head .tag.nv { color: var(--nvidia); border-color: rgba(118,185,0,.45); }
+  .label { font-family: var(--font-mono); color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; margin: 12px 0 6px; }
+  .resolved { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font-family: var(--font-mono); }
+  .resolved .ver { color: var(--green); font-size: 20px; font-weight: 700; }
+  .resolved .pkg { color: var(--text); font-size: 14px; }
   .sources { display: flex; flex-direction: column; gap: 6px; }
   .src { display: flex; align-items: center; gap: 10px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 11px; text-decoration: none; color: var(--text); font-size: 13px; }
-  .src:hover { border-color: var(--accent); }
-  .src .tv { color: var(--accent-2); font-weight: 700; font-size: 11px; border: 1px solid rgba(0,212,160,.4); border-radius: 5px; padding: 1px 6px; flex: none; }
-  .src .u { color: var(--muted); font-size: 12px; margin-left: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 40%; }
+  .src:hover { border-color: var(--accent-2); }
+  .src .tv { font-family: var(--font-mono); color: var(--accent-2); font-weight: 700; font-size: 10.5px; border: 1px solid rgba(0,212,160,.4); border-radius: 5px; padding: 1px 6px; flex: none; }
+  .src .u { font-family: var(--font-mono); color: var(--muted); font-size: 11.5px; margin-left: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 38%; }
   .note { background: var(--panel-2); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 9px 12px; font-size: 13.5px; }
-  .diff { background: #0a0d13; border: 1px solid var(--border); border-radius: 8px; overflow-x: auto; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; }
-  .diff .ln { padding: 1px 12px; white-space: pre; }
+  .err { background: #1a0f16; border: 1px solid rgba(255,92,115,.25); color: #ffb3c0; border-radius: 8px; padding: 9px 12px; font-family: var(--font-mono); font-size: 12.5px; white-space: pre-wrap; word-break: break-word; }
+  .diff { background: #0a0d13; border: 1px solid var(--border); border-radius: 8px; overflow-x: auto; font-family: var(--font-mono); font-size: 12.5px; }
+  .diff .ln { padding: 1px 12px; white-space: pre; min-width: 0; }
   .diff .add { background: var(--add); color: var(--add-text); }
   .diff .del { background: var(--del); color: var(--del-text); }
   .diff .hd { color: var(--muted); }
-  .footer-stats { display: flex; flex-wrap: wrap; gap: 16px; color: var(--muted); font-size: 13px; margin-top: 16px; }
-  .footer-stats b { color: var(--text); font-weight: 600; }
-  .hidden { display: none; }
-  a { color: var(--accent); }
+  .footer-stats { display: flex; flex-wrap: wrap; gap: 10px 18px; color: var(--muted); font-size: 13px; margin-top: 16px; font-family: var(--font-mono); }
+  .footer-stats b { color: var(--text); font-weight: 500; }
+  .replay-note { color: var(--muted); font-size: 13px; margin: 14px 2px 0; max-width: 72ch; }
   .spin { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.25); border-top-color: #0b0e14; border-radius: 50%; display: inline-block; animation: sp .7s linear infinite; }
   @keyframes sp { to { transform: rotate(360deg); } }
-  .flow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 4px 0 30px; }
-  .flow .step { display: inline-flex; align-items: center; gap: 9px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 10px 13px; font-size: 13.5px; font-weight: 600; }
-  .flow .step .n { width: 20px; height: 20px; border-radius: 50%; background: var(--panel-2); border: 1px solid var(--border); display: inline-flex; align-items: center; justify-content: center; font-size: 11px; color: var(--muted); font-weight: 700; flex: none; }
-  .flow .step.tavily { border-color: rgba(0,212,160,.45); }
-  .flow .step.model { border-color: rgba(118,185,0,.5); }
-  .flow .sep { color: var(--muted); font-size: 17px; }
-  .flow .loop { color: var(--amber); font-size: 12.5px; font-weight: 650; white-space: nowrap; }
-  .callout { background: var(--panel-2); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; margin-bottom: 18px; }
-  .callout h3 { margin: 0 0 6px; font-size: 15px; }
-  .callout p { margin: 0; color: var(--muted); font-size: 13.5px; }
-  .site-footer { border-top: 1px solid var(--border); margin-top: 30px; padding-top: 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; font-size: 13px; color: var(--muted); }
+
+  .site-footer { border-top: 1px solid var(--border); margin-top: 54px; padding-top: 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; font-size: 13px; color: var(--muted); font-family: var(--font-mono); }
   .site-footer a { color: var(--accent); text-decoration: none; }
   .site-footer a:hover { text-decoration: underline; }
   .site-footer .sepdot { opacity: .4; }
-  @media (max-width: 560px) {
-    h1 { font-size: 28px; }
-    .flow { gap: 7px; }
-    .flow .step { padding: 8px 10px; font-size: 12.5px; }
-    .flow .sep { display: none; }
+
+  .prcard .pr-title { font-family: var(--font-display); font-weight: 650; font-size: 15px; margin-bottom: 6px; }
+  .prcard .pr-sum { color: var(--muted); font-size: 13.5px; margin: 0 0 13px; }
+  .prcard .pr-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+  .prcard .stamp { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted-2); }
+  .use-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; margin-bottom: 16px; }
+  .use-grid .diff { margin-top: 10px; }
+  @media (max-width: 680px) { .use-grid { grid-template-columns: 1fr; } }
+
+  [hidden] { display: none !important; }
+  @media (max-width: 680px) {
+    .flow { grid-template-columns: 1fr 1fr; }
+    .stats { grid-template-columns: 1fr; }
+    .two { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 440px) {
+    .flow { grid-template-columns: 1fr; }
+    h2 { font-size: 22px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before { animation: none !important; transition: none !important; }
   }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <div class="kicker">Nebius Token Factory + Tavily reference app</div>
+
+  <header class="hero">
+    <p class="kicker">Nebius Token Factory · NVIDIA Nemotron · Tavily</p>
     <h1>Live<span class="fix">Fix</span></h1>
-    <p class="tagline">Self-healing code. A failing test goes in; Tavily finds the current fix on the live web, an NVIDIA Nemotron model on Nebius Token Factory rewrites the code, and the test comes out green.</p>
+    <p class="hook">The security upgrade that fixes the CVE and keeps your build green.</p>
+    <p class="tagline">A dependency has a vulnerability. The safe version is newer than any model's training data, and the upgrade that patches it often breaks your code. LiveFix resolves the safe version from the live web, bumps the pin, and repairs what the upgrade breaks, verified by your own tests. A merge-ready fix, not a red bump PR.</p>
+    <div class="cta-row">
+      <a href="#demo" class="btn primary">Watch a real remediation</a>
+      <a href="https://nebiusglobalaihackathon.devpost.com/" target="_blank" rel="noopener" class="btn ghost">The hackathon</a>
+    </div>
     <div class="stack">
       <span class="chip"><span class="dot" style="background:#7c9cff"></span>Nebius Token Factory</span>
       <span class="chip"><span class="dot" style="background:#76b900"></span>NVIDIA Nemotron</span>
       <span class="chip"><span class="dot" style="background:#00d4a0"></span>Tavily web search</span>
     </div>
+    <div class="stats">
+      <div class="stat"><div class="big">15<span class="slash">/</span>15</div><div class="lab">CVEs remediated with live web search</div></div>
+      <div class="stat"><div class="big">0<span class="slash">/</span>15</div><div class="lab">remediated without it: the model abstains</div></div>
+      <div class="stat"><div class="big">5</div><div class="lab">real 2026 CVEs, across PyPI and npm</div></div>
+    </div>
   </header>
 
-  <div class="flow" aria-label="The LiveFix repair loop">
-    <span class="step"><span class="n">1</span>Failing test</span>
-    <span class="sep">&rarr;</span>
-    <span class="step tavily"><span class="n">2</span>Tavily searches the live web</span>
-    <span class="sep">&rarr;</span>
-    <span class="step model"><span class="n">3</span>Nemotron on Nebius rewrites the file</span>
-    <span class="sep">&rarr;</span>
-    <span class="step"><span class="n">4</span>Re-run</span>
-    <span class="loop">&#8634; until green</span>
-  </div>
+  <section class="reveal">
+    <p class="eyebrow">The problem</p>
+    <h2>A security bump is two walls, not one</h2>
+    <p class="lede">Exploiting a known vulnerability is now the most common way a breach starts, ahead of stolen credentials, and the median time to actually patch one has climbed to 43 days and is still rising (Verizon 2026 DBIR). Dependabot, Snyk, Renovate and Mend are superb at telling you what to upgrade. Then they open a version-bump PR and stop.</p>
+    <p class="lede" style="margin-bottom:18px">Two things keep that PR from ever turning green, and both are exactly what an autonomous agent should own.</p>
+    <div class="two">
+      <div class="wall">
+        <div class="tagline2">Wall 1 · the fact</div>
+        <h4>Which version is even safe?</h4>
+        <p>A CVE disclosed this month post-dates every model's training cutoff. Ask a plain model for the fixed version and it cannot know it. The honest ones say so; the rest guess.</p>
+      </div>
+      <div class="wall">
+        <div class="tagline2">Wall 2 · the break</div>
+        <h4>The fix breaks the build</h4>
+        <p>The safe version is often a major release that removed an API you used. So the upgrade that closes the CVE turns your tests red, and the PR rots unmerged.</p>
+      </div>
+    </div>
+  </section>
 
-  <div class="card">
-    <select id="caseSelect" aria-label="Choose a demo case"></select>
-    <p class="case-desc" id="caseDesc"></p>
-    <button class="run-btn" id="runBtn">Run LiveFix</button>
-  </div>
+  <section class="reveal">
+    <p class="eyebrow">The evidence</p>
+    <h2>What a plain model cannot do</h2>
+    <p class="lede" style="margin-bottom:16px">We gave the same NVIDIA Nemotron model five real, 2026-disclosed CVEs, across two ecosystems (PyPI and npm), and asked for the minimal safe version, with the live web on and off. Identical model, identical prompt, one switch. Each cell is correct answers over three runs.</p>
+    <div class="bench-wrap">
+      <table class="bench-table">
+        <thead>
+          <tr><th>Advisory (2026)</th><th>Package</th><th>Web ON</th><th>Web OFF</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="cve">CVE-2026-112398<div class="sub">critical RCE</div></td><td>pillow</td><td class="on">3/3</td><td class="off">0/3 <small>abstained</small></td></tr>
+          <tr><td class="cve">CVE-2026-111497<div class="sub">Brotli decoder RCE</div></td><td>brotli</td><td class="on">3/3</td><td class="off">0/3 <small>abstained</small></td></tr>
+          <tr><td class="cve">CVE-2026-42309<div class="sub">heap overflow</div></td><td>pillow</td><td class="on">3/3</td><td class="off">0/3 <small>abstained</small></td></tr>
+          <tr><td class="cve">CVE-2026-97689<div class="sub">chunk-size buffering</div></td><td>urllib3</td><td class="on">3/3</td><td class="off">0/3 <small>abstained</small></td></tr>
+          <tr><td class="cve">CVE-2026-59873<div class="sub">node-tar DoS (npm)</div></td><td>tar</td><td class="on">3/3</td><td class="off">0/3 <small>abstained</small></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="honest"><b>The honest part:</b> without the web the model does not hallucinate a version, it <b>abstains</b> (it knows it cannot know). That is the gap Tavily fills. We only claim the web where it earns its place: on the post-cutoff fact. The code fix itself a strong model can often write unaided, so we don't overclaim it.</p>
+  </section>
 
-  <div class="card hidden" id="results">
-    <div class="status-row" id="statusRow"></div>
-    <div id="timeline"></div>
-    <div class="footer-stats hidden" id="footerStats"></div>
-  </div>
+  <section class="reveal">
+    <p class="eyebrow">How it works</p>
+    <h2>The remediation loop</h2>
+    <div class="flow">
+      <div class="step">
+        <span class="n">01</span>
+        <h4>Detect</h4>
+        <p>Start from a vulnerable dependency and its advisory id, the way a scanner reports it.</p>
+        <span class="svc">pip-audit</span>
+      </div>
+      <div class="step tavily">
+        <span class="n">02</span>
+        <h4>Resolve the safe version</h4>
+        <p>Search the live web for the advisory and read off the minimal fixed version. The fact the weights cannot hold.</p>
+        <span class="svc">Tavily</span>
+      </div>
+      <div class="step model">
+        <span class="n">03</span>
+        <h4>Bump and repair</h4>
+        <p>Pin the safe version, then rewrite whatever code the upgrade broke, grounded in the current docs.</p>
+        <span class="svc">Nemotron · Nebius</span>
+      </div>
+      <div class="step">
+        <span class="n">04</span>
+        <h4>Verify</h4>
+        <p>Re-run the project's tests, looping until green or the budget is spent.</p>
+        <span class="svc">pytest</span>
+      </div>
+    </div>
+    <p class="safety"><b>Safe by construction:</b> every file the agent writes is resolved and checked to stay inside the project, and nothing ships until the project's own tests pass.</p>
+  </section>
 
-  <p class="tagline" style="font-size:13px;margin-top:10px">This hosted page replays a recorded live run of LiveFix (real Tavily sources, real Nemotron patch, real timing). The open source app runs the same loop live against the Nebius Token Factory and Tavily APIs.</p>
+  <section class="reveal">
+    <p class="eyebrow">How you use it</p>
+    <h2>One command, or zero</h2>
+    <p class="lede" style="margin-bottom:18px">LiveFix does not scan for vulnerabilities, your scanner already does that. You hand it a flagged advisory and it evaluates and produces the safe upgrade, proven by your own tests. Two ways to run it.</p>
+    <div class="use-grid">
+      <div class="wall">
+        <div class="tagline2" style="color:var(--accent)">Run it yourself</div>
+        <h4>As a CLI</h4>
+        <p>Point it at a project and an advisory.</p>
+        <div class="diff"><div class="ln">python -m livefix.remediate \</div><div class="ln">  --project . --package pillow \</div><div class="ln">  --advisory CVE-2026-112398 \</div><div class="ln">  --test "python -m pytest -q"</div></div>
+      </div>
+      <div class="wall">
+        <div class="tagline2" style="color:var(--nvidia)">Zero touch</div>
+        <h4>As a GitHub Action</h4>
+        <p>A scanner alert opens a verified PR on its own.</p>
+        <div class="diff"><div class="ln">- uses: novacorp-labs/livefix@v1</div><div class="ln">  with:</div><div class="ln">    package: pillow</div><div class="ln">    advisory: CVE-2026-112398</div></div>
+      </div>
+    </div>
+    <div class="label">The pull request it opens</div>
+    <div class="card prcard">
+      <div class="pr-title">Security remediation: CVE-2026-112398 in pillow</div>
+      <p class="pr-sum">Resolved the safe version from the live web and landed the upgrade green. Bumped <code>pillow==12.3.0</code> to <code>pillow&gt;=13.0.0</code>, and repaired the code the upgrade broke. Tests pass.</p>
+      <div class="pr-foot">
+        <span class="pill green"><span class="dot"></span>LiveFix / remediation-verified</span>
+        <span class="stamp">Verified by LiveFix &middot; NovaCorp Labs &middot; novacorplabs.com</span>
+      </div>
+    </div>
+    <p class="safety" style="margin-top:12px"><b>Honest by construction:</b> the mark says the change was remediated and verified by your tests, never that a human reviewed it. The check goes green only when the tests pass.</p>
+  </section>
 
-  <div class="callout">
-    <h3>Does the web search actually earn its place?</h3>
-    <p>We built a five-case benchmark of real, documented, post-cutoff API breakages (across NumPy, pandas, Pydantic, Flask, and the standard library) and run the identical loop with Tavily on and off. The gap between the two is the value the live web adds. The harness ships an offline self-test, so the measurement is trustworthy before a single paid token is spent; the full on-versus-off table publishes with the run.</p>
-  </div>
+  <section id="demo" class="reveal">
+    <p class="eyebrow">Live demo</p>
+    <h2>Watch one CVE get remediated</h2>
+    <p class="lede" style="margin-bottom:18px">Press run. This replays a real recorded remediation: the real Tavily sources, the real resolved version, the real patch, the real timing.</p>
+    <div class="card">
+      <div class="alert-box">
+        <span class="cve-badge">CVE-2026-112398</span>
+        <div class="txt">
+          <b>pillow 12.3.0</b> has a critical remote-code-execution flaw.
+          <div class="meta">The fix ships only in Pillow 13.0.0, which removed an API this project uses.</div>
+        </div>
+      </div>
+      <button class="run-btn" id="runBtn">Remediate it</button>
+    </div>
+    <div class="card" id="results" hidden style="margin-top:14px">
+      <div id="timeline"></div>
+      <div class="footer-stats" id="footerStats" hidden></div>
+    </div>
+    <p class="replay-note">This hosted page replays a recorded live run so it needs no API keys. The open source agent runs the identical flow live: <code>python -m livefix.remediate</code> against the Nebius Token Factory and Tavily APIs.</p>
+  </section>
+
+  <section class="reveal">
+    <p class="eyebrow">Where it fits</p>
+    <h2>The last mile your scanner leaves open</h2>
+    <p class="lede" style="margin-bottom:14px">LiveFix is not another scanner. It is the one step every scanner leaves to you: scan, alert, bump PR, and then today a human, or a PR that rots. We sit on top of the scanner you already run and turn its red bump PR into a green, merge-ready change. The wedge is a partnership, not a fight: your scanner says what is broken, LiveFix lands the fix.</p>
+    <p class="lede">The product follows directly: a GitHub App billed per repository, triggered by the alert you already receive, and measured in the number security leaders now report to their board, mean time to remediate. Every advisory landed green is engineer-hours saved and days off an MTTR that the EU Cyber Resilience Act and the SEC disclosure rules are turning into a hard obligation.</p>
+  </section>
+
+  <section class="reveal">
+    <p class="eyebrow">The stack, and what each part does</p>
+    <h2>Four services, one job each</h2>
+    <div class="flow">
+      <div class="step tavily">
+        <span class="svc">Tavily</span>
+        <h4>The fact</h4>
+        <p>Live web search supplies the one thing the model cannot hold: the safe version of a CVE disclosed after its training. The load-bearing step.</p>
+      </div>
+      <div class="step model">
+        <span class="svc">NVIDIA Nemotron</span>
+        <h4>The repair</h4>
+        <p>The open model <code style="color:var(--nvidia)">nemotron-3-super-120b-a12b</code> writes the minimal patch for the code the upgrade broke, and abstains instead of guessing.</p>
+      </div>
+      <div class="step">
+        <span class="svc" style="color:var(--accent);border-color:var(--accent)">Nebius Token Factory</span>
+        <h4>The compute</h4>
+        <p>Serves the model behind an OpenAI-compatible endpoint, so the official SDK runs it with one base URL and key. No GPU on your side.</p>
+      </div>
+      <div class="step">
+        <span class="svc">LangSmith</span>
+        <h4>The trail</h4>
+        <p>Optional tracing records every resolve, search and model call, so each remediation is auditable. The evidence behind the verified mark.</p>
+      </div>
+    </div>
+    <p class="safety"><b>Why it matters:</b> remove any one and the loop breaks. No Tavily, no fact; no Nemotron, no fix; no Nebius, no model; no trace, no proof. Each service does exactly one load-bearing job.</p>
+  </section>
 
   <div class="site-footer">
     <a href="https://nebiusglobalaihackathon.devpost.com/" target="_blank" rel="noopener">Nebius x NVIDIA Global AI Hackathon</a>
@@ -184,25 +398,11 @@
   </div>
 </div>
 
-<script type="application/json" id="casedata">[{"description": "A module imports Mapping from collections, which Python 3.10 removed. LiveFix reads the traceback, searches the live web for the current import, and has Nemotron rewrite the file until the test passes.", "id": "broken_project", "max_iters": 4, "test_command": "python -m pytest -q", "title": "collections.Mapping removed in Python 3.10"}]</script>
-<script type="application/json" id="rundata">{"broken_project": {"case": "broken_project", "elapsed": 11.6, "iterations": [{"changed": ["app.py"], "diffs": {"app.py": "--- a/app.py\n+++ b/app.py\n@@ -5,7 +5,7 @@\n of post-cutoff, documented migration LiveFix is meant to find and apply.\n \"\"\"\n \n-from collections import Mapping  # broken on Python 3.10+\n+from collections.abc import Mapping\n \n \n def count_keys(m):\n"}, "error": "E   ImportError: cannot import name 'Mapping' from 'collections' (C:\\Users\\Usuario\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\collections\\__init__.py)", "explanation": "Changed import from collections to collections.abc for Mapping as required in Python 3.10+.", "hits": [{"title": "Python Importerror: Cannot Import Name Mapping From Collections - GeeksforGeeks", "url": "https://www.geeksforgeeks.org/python/python-importerror-cannot-import-name-mapping-from-collections"}, {"title": "Importerror: cannot import name 'mapping' from 'collections'", "url": "https://itsourcecode.com/importerror/importerror-cannot-import-name-mapping-from-collections"}, {"title": "SOLVED: ImportError: cannot import name 'Mapping' from 'collections'. Correction: Iterable*", "url": "https://www.youtube.com/watch?v=qV1VXka_N7M"}, {"title": "ImportError: cannot import name 'Mapping' from 'collections' · Issue #4487 · boto/boto3 · GitHub", "url": "https://github.com/boto/boto3/issues/4487"}, {"title": "ImportError: cannot import name Mapping from 'collections' | bobbyhadz", "url": "https://bobbyhadz.com/blog/python-importerror-cannot-import-name-mapping-from-collections"}], "index": 1, "passed": false}, {"changed": [], "diffs": {}, "error": "", "explanation": "test already passing", "hits": [], "index": 2, "passed": true}], "model": "nvidia/nemotron-3-super-120b-a12b", "passed": true, "test_command": "python -m pytest -q", "title": "collections.Mapping removed in Python 3.10", "web_search": true}}</script>
+<script type="application/json" id="rundata">{"advisory":"CVE-2026-112398","package":"pillow","note":"critical RCE via a crafted image","model":"nvidia/nemotron-3-super-120b-a12b","elapsed":28.0,"vulnerable_pin":"pillow==12.3.0","resolve":{"safe_version":"13.0.0","confident":true,"source":"https://explore.alas.aws.amazon.com/CVE-2026-112398.html","hits":[{"title":"CVE-2026-112398","url":"https://explore.alas.aws.amazon.com/CVE-2026-112398.html"},{"title":"Python-pillow CVEs and Security Vulnerabilities - OpenCVE","url":"https://app.opencve.io/cve?vendor=python-pillow"},{"title":"CVE-2026-112398: Heap-based Buffer Overflow in python-pillow (Threat Radar)","url":"https://radar.offseq.com/threat/cve-2026-112398-cwe-122-heap-based-buffer-overflow-in-python-pillow-pillow-b7909ced3b61711b"},{"title":"SCA: security update for Pillow (GHSA-f2g6-542v-9j58) - Tenable","url":"https://www.tenable.com/plugins/cloud-security/476587"},{"title":"Heap-based Buffer Overflow in pillow | CVE-2026-112398 | Snyk","url":"https://security.snyk.io/vuln/SNYK-PYTHON-PILLOW-21279300"}]},"bump":{"manifest":"requirements.txt","before":"pillow==12.3.0","after":"pillow>=13.0.0"},"repair":{"error":"E   AttributeError: 'ImageCmsProfile' object has no attribute 'product_name'\n\napp.py:13: AttributeError","explanation":"Replace direct attribute access with the Pillow-provided function ImageCms.getProfileName to retrieve the profile's product name.","diff":"--- a/app.py\n+++ b/app.py\n@@ -10,4 +10,4 @@\n \n def profile_label(profile):\n     \"\"\"Return the profile's human-readable name, trimmed.\"\"\"\n-    return profile.product_name.strip()\n+    return ImageCms.getProfileName(profile).strip()\n"}}</script>
 <script>
 const esc = (s) => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-const CASES = JSON.parse(document.getElementById('casedata').textContent);
-const RUNS = JSON.parse(document.getElementById('rundata').textContent);
-
-function loadCases() {
-  const sel = document.getElementById('caseSelect');
-  sel.innerHTML = CASES.map((c) => `<option value="${esc(c.id)}">${esc(c.title || c.id)}</option>`).join('');
-  sel.onchange = showDesc;
-  showDesc();
-}
-function showDesc() {
-  const id = document.getElementById('caseSelect').value;
-  const c = CASES.find(x => x.id === id);
-  document.getElementById('caseDesc').textContent = c ? (c.description || '') : '';
-}
+const RUN = JSON.parse(document.getElementById('rundata').textContent);
 
 function diffHtml(diff) {
   const lines = (diff || '').split('\n').filter(l => l.length);
@@ -215,83 +415,78 @@ function diffHtml(diff) {
   }).join('') + '</div>';
 }
 
-function setStatus(state) {
-  const row = document.getElementById('statusRow');
-  if (state === 'running')
-    row.innerHTML = '<span class="pill run"><span class="dot"></span>Test failing</span><span class="arrow">running LiveFix...</span>';
-  else if (state === 'red')
-    row.innerHTML = '<span class="pill red"><span class="dot"></span>Test failing</span>';
-  else if (state === 'flip')
-    row.innerHTML = '<span class="pill red"><span class="dot"></span>Test failing</span><span class="arrow">to</span><span class="pill green"><span class="dot"></span>Test passing</span>';
+function addPhase(cls, headHtml) {
+  const tl = document.getElementById('timeline');
+  const div = document.createElement('div');
+  div.className = 'phase' + (cls ? ' ' + cls : '');
+  div.innerHTML = `<div class="phase-head">${headHtml}</div>`;
+  tl.appendChild(div);
+  return div;
 }
 
-async function runCase() {
-  const id = document.getElementById('caseSelect').value;
+async function runRemediation() {
   const btn = document.getElementById('runBtn');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span> Running...';
-  document.getElementById('results').classList.remove('hidden');
+  btn.innerHTML = '<span class="spin"></span> Remediating...';
+  const results = document.getElementById('results');
+  results.hidden = false;
   document.getElementById('timeline').innerHTML = '';
-  document.getElementById('footerStats').classList.add('hidden');
-  setStatus('running');
+  document.getElementById('footerStats').hidden = true;
 
-  const data = RUNS[id];
-  await sleep(1100); // let the "running" state read before the recorded result reveals
-
-  setStatus('red');
+  // Phase 1: resolve the safe version (Tavily)
   await sleep(500);
-  const tl = document.getElementById('timeline');
+  const p1 = addPhase('tavily', '<span>1 · Resolve safe version</span><span class="tag tv">Tavily</span>');
+  p1.insertAdjacentHTML('beforeend', '<div class="label">Searching live advisories for ' + esc(RUN.advisory) + '</div>');
+  await sleep(1100);
+  const r = RUN.resolve;
+  p1.insertAdjacentHTML('beforeend',
+    `<div class="resolved"><span class="pkg">${esc(RUN.package)} safe at</span><span class="ver">${esc(r.safe_version)}</span></div>`);
+  p1.insertAdjacentHTML('beforeend',
+    '<div class="label">Grounded on ' + r.hits.length + ' live source(s)</div><div class="sources">'
+    + r.hits.map(h => `<a class="src" href="${esc(h.url)}" target="_blank" rel="noopener"><span class="tv">TAVILY</span>${esc(h.title)}<span class="u">${esc(h.url)}</span></a>`).join('')
+    + '</div>');
+  await sleep(900);
 
-  for (const it of data.iterations) {
-    if (it.passed) continue; // the trailing "already passing" probe
-    const div = document.createElement('div');
-    div.className = 'iter';
-    let html = `<div class="iter-head">Iteration ${it.index}</div>`;
-    if (it.error) html += `<div class="label">Failing test</div><div class="err">${esc(it.error)}</div>`;
-    tl.appendChild(div); div.innerHTML = html;
-    await sleep(650);
+  // Phase 2: bump the pin
+  const p2 = addPhase('', '<span>2 · Bump the dependency pin</span>');
+  p2.insertAdjacentHTML('beforeend', '<div class="label">' + esc(RUN.bump.manifest) + '</div>');
+  p2.insertAdjacentHTML('beforeend', diffHtml('--- a/' + RUN.bump.manifest + '\n+++ b/' + RUN.bump.manifest + '\n-' + RUN.bump.before + '\n+' + RUN.bump.after));
+  await sleep(900);
 
-    if (it.hits && it.hits.length) {
-      const src = document.createElement('div');
-      src.innerHTML = `<div class="label">Tavily grounded the fix on ${it.hits.length} live source(s)</div>`
-        + '<div class="sources">' + it.hits.map(h =>
-            `<a class="src" href="${esc(h.url)}" target="_blank" rel="noopener"><span class="tv">TAVILY</span>${esc(h.title || h.url)}<span class="u">${esc(h.url)}</span></a>`
-          ).join('') + '</div>';
-      div.appendChild(src);
-      await sleep(700);
-    }
-    if (it.explanation) {
-      const n = document.createElement('div');
-      n.innerHTML = `<div class="label">Nemotron rewrote the code</div><div class="note">${esc(it.explanation)}</div>`;
-      div.appendChild(n);
-      await sleep(500);
-    }
-    for (const [file, diff] of Object.entries(it.diffs || {})) {
-      const d = document.createElement('div');
-      d.innerHTML = `<div class="label">Patch: ${esc(file)}</div>` + diffHtml(diff);
-      div.appendChild(d);
-      await sleep(400);
-    }
-  }
+  // Phase 3: repair the code the upgrade broke (Nemotron)
+  const p3 = addPhase('model', '<span>3 · Repair the code the upgrade broke</span><span class="tag nv">Nemotron · Nebius</span>');
+  p3.insertAdjacentHTML('beforeend', '<div class="label">Failing test after the upgrade</div><div class="err">' + esc(RUN.repair.error) + '</div>');
+  await sleep(850);
+  p3.insertAdjacentHTML('beforeend', '<div class="label">Nemotron rewrote the code</div><div class="note">' + esc(RUN.repair.explanation) + '</div>');
+  await sleep(500);
+  p3.insertAdjacentHTML('beforeend', '<div class="label">Patch: app.py</div>' + diffHtml(RUN.repair.diff));
+  await sleep(700);
 
-  await sleep(300);
-  if (data.passed) {
-    setStatus('flip');
-    const last = document.querySelector('.iter:last-child');
-    if (last) last.classList.add('ok');
-  }
+  // Phase 4: verified green
+  const p4 = addPhase('ok', '<span>4 · Verified</span>');
+  p4.insertAdjacentHTML('beforeend', '<div style="margin-top:4px"><span class="pill green"><span class="dot"></span>Tests passing</span></div>');
+
   const fs = document.getElementById('footerStats');
-  fs.classList.remove('hidden');
+  fs.hidden = false;
   fs.innerHTML =
-    `<span>Model: <b>${esc(data.model)}</b></span>`
-    + `<span>Web search: <b>${data.web_search ? 'Tavily (on)' : 'off'}</b></span>`
-    + `<span>Test: <b>${esc(data.test_command)}</b></span>`
-    + `<span>Elapsed: <b>${esc(data.elapsed)}s</b></span>`;
-  btn.disabled = false; btn.textContent = 'Run again';
+    `<span>Advisory: <b>${esc(RUN.advisory)}</b></span>`
+    + `<span>Resolved: <b>${esc(RUN.package)} ${esc(RUN.resolve.safe_version)}</b></span>`
+    + `<span>Model: <b>${esc(RUN.model)}</b></span>`
+    + `<span>Elapsed: <b>${esc(RUN.elapsed)}s</b></span>`;
+  btn.disabled = false;
+  btn.textContent = 'Run again';
 }
 
-document.getElementById('runBtn').onclick = runCase;
-loadCases();
+document.getElementById('runBtn').onclick = runRemediation;
+
+// reveal on scroll, from a visible resting state
+if (!matchMedia('(prefers-reduced-motion: reduce)').matches && 'IntersectionObserver' in window) {
+  document.documentElement.classList.add('js-reveal');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+}
 </script>
 </body>
 </html>

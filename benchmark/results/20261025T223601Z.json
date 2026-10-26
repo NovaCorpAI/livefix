@@ -1,0 +1,270 @@
+{
+  "generated_utc": "20261025T223601Z",
+  "repeats": 3,
+  "conditions": [
+    "on",
+    "off"
+  ],
+  "rows": [
+    {
+      "case": "flask_markup",
+      "library": "flask",
+      "runs": {
+        "on": [
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": true,
+            "elapsed_s": 9.3
+          },
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": true,
+            "elapsed_s": 11.3
+          },
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": true,
+            "elapsed_s": 7.5
+          }
+        ],
+        "off": [
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": false,
+            "elapsed_s": 5.0
+          },
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": false,
+            "elapsed_s": 6.8
+          },
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": false,
+            "elapsed_s": 8.6
+          }
+        ]
+      }
+    },
+    {
+      "case": "numpy_aliases",
+      "library": "numpy",
+      "runs": {
+        "on": [
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": true,
+            "elapsed_s": 13.6
+          },
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": true,
+            "elapsed_s": 7.2
+          },
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": true,
+            "elapsed_s": 7.2
+          }
+        ],
+        "off": [
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": false,
+            "elapsed_s": 6.1
+          },
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": false,
+            "elapsed_s": 5.3
+          },
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": false,
+            "elapsed_s": 8.4
+          }
+        ]
+      }
+    },
+    {
+      "case": "pandas_append",
+      "library": "pandas",
+      "runs": {
+        "on": [
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": true,
+            "elapsed_s": 12.0
+          },
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": true,
+            "elapsed_s": 10.0
+          },
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": true,
+            "elapsed_s": 13.2
+          }
+        ],
+        "off": [
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": false,
+            "elapsed_s": 7.6
+          },
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": false,
+            "elapsed_s": 7.1
+          },
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": false,
+            "elapsed_s": 9.1
+          }
+        ]
+      }
+    },
+    {
+      "case": "py310_collections",
+      "library": "stdlib (Python)",
+      "runs": {
+        "on": [
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": true,
+            "elapsed_s": 7.3
+          },
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": true,
+            "elapsed_s": 10.1
+          },
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": true,
+            "elapsed_s": 6.1
+          }
+        ],
+        "off": [
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": false,
+            "elapsed_s": 5.4
+          },
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": false,
+            "elapsed_s": 5.7
+          },
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": false,
+            "elapsed_s": 5.6
+          }
+        ]
+      }
+    },
+    {
+      "case": "pydantic_settings",
+      "library": "pydantic",
+      "runs": {
+        "on": [
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": true,
+            "elapsed_s": 9.7
+          },
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": true,
+            "elapsed_s": 6.6
+          },
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": true,
+            "elapsed_s": 7.1
+          }
+        ],
+        "off": [
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": false,
+            "elapsed_s": 8.6
+          },
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": false,
+            "elapsed_s": 5.8
+          },
+          {
+            "passed": true,
+            "started_red": true,
+            "iterations": 2,
+            "used_search": false,
+            "elapsed_s": 5.8
+          }
+        ]
+      }
+    }
+  ]
+}

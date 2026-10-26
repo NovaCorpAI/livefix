@@ -11,9 +11,15 @@ from .tracing import traceable
 class NebiusChat:
     def __init__(self, config: Config):
         self._model = config.nebius_model
+        # A 120B model regenerating a whole file can take a while, and Token
+        # Factory occasionally returns a transient 5xx or drops the connection.
+        # Give each request a generous timeout and let the SDK retry transient
+        # failures with backoff, so one slow or flaky call does not sink a run.
         self._client = OpenAI(
             api_key=config.nebius_api_key,
             base_url=config.nebius_base_url,
+            timeout=180.0,
+            max_retries=4,
         )
 
     @property

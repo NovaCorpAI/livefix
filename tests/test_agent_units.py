@@ -65,3 +65,32 @@ def test_candidate_files_parses_pytest_collection_format():
     out = chr(10).join(lines)
     names = [p.name for p in candidate_files(out, EXAMPLE)]
     assert "app.py" in names
+
+
+def test_candidate_files_parses_single_frame_exception_location():
+    # A runtime error raised in one user frame ends with `<path>:<line>: <Exc>`,
+    # with no ` in <func>`. The resolver must still find the file.
+    app = EXAMPLE / "app.py"
+    out = chr(10).join([
+        "    return value.strip()",
+        "           ^^^^^^^^^^^^",
+        "E   AttributeError: 'X' object has no attribute 'strip'",
+        f"{app}:13: AttributeError",
+    ])
+    names = [p.name for p in candidate_files(out, EXAMPLE)]
+    assert "app.py" in names
+
+
+def test_build_query_skips_pytest_summary_line():
+    # The last matching line is pytest's truncated summary; prefer the clean
+    # `E   <Exc>: <message>` line over it.
+    out = chr(10).join([
+        "E   AttributeError: 'ImageCmsProfile' object has no attribute 'product_name'",
+        "app.py:13: AttributeError",
+        "=== short test summary info ===",
+        "FAILED test_app.py::test_x - AttributeError: 'ImageCmsProfile' object has ...",
+    ])
+    q = build_query(out)
+    assert q.startswith("AttributeError:")
+    assert "product_name" in q
+    assert "FAILED" not in q and "::" not in q

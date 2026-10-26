@@ -1,21 +1,22 @@
 # Builder feedback: Nebius Token Factory + Tavily
 
-Honest friction we hit building LiveFix (a self-healing-test agent) end to end on
-the Nebius x NVIDIA stack, with the fix we would suggest for each. Ordered by how
-much it slowed us down. Everything here is something we actually ran into, not a
-wishlist.
+Honest friction we hit building LiveFix (an autonomous dependency-remediation
+agent) end to end on the Nebius x NVIDIA stack, with the fix we would suggest for
+each. Ordered by how much it slowed us down. Everything here is something we
+actually ran into, not a wishlist.
 
 ## 1. Strict JSON output needs a native mode (Nebius Token Factory)
 
 LiveFix asks the model for one JSON object: `{"explanation": ..., "files":
 {path: content}}`. Nemotron (`nvidia/nemotron-3-super-120b-a12b`) is good at this
 but not reliable at it: it sometimes wraps the JSON in prose or a markdown fence,
-or emits reasoning before the object. We had to defend against that with a
-brace-scanning parser and a retry loop that escalates temperature (0.0, then 0.3,
-then 0.6) until an object parses.
+emits reasoning before the object, or returns the target file unchanged. We had to
+defend against that with a brace-scanning parser, a retry loop that escalates
+temperature (0.0 up to 0.8), and a check that rejects a reply that parses but
+changes nothing so the loop keeps trying.
 
 - **Impact:** real added code and latency, and an occasional iteration lost to an
-  unparseable reply.
+  unparseable or no-op reply.
 - **Suggestion:** support OpenAI-style `response_format={"type": "json_object"}`
   (and ideally a JSON schema / tool-calling path) on the Token Factory endpoint,
   documented per model. For an agent that parses every reply, guaranteed JSON is
@@ -38,9 +39,10 @@ As a new AI Builder Program member:
 
 - `.../settings/billing` returned a Not found page; the live billing lives under a
   different path, and the product domain (studio vs tokenfactory) added confusion.
-- The dashboard showed a small trial balance, while the $25 program credit arrives
-  in a **separate email** and was not visible in-app at the same time, so it was
-  not obvious whether it had been granted.
+- The dashboard showed a small trial balance, while the $25 program credit arrived
+  as a **promo code in a separate email** (easy to miss, in our case filed in
+  another folder) that then has to be redeemed under the balance menu. It was not
+  visible in-app until redeemed, so it was not obvious whether it had been granted.
 - Transactions showed trial grant and consumption but no clear "program credit:
   pending/applied" line.
 
@@ -74,10 +76,13 @@ would make it instantly legible.
 - The OpenAI-compatible endpoint meant the official `openai` Python SDK worked
   unchanged against Nebius: just a base URL and key. That is the reason the agent
   was small.
-- Tavily `search_depth="advanced"` returned genuinely useful, current
-  documentation snippets for post-cutoff API changes, which is the whole premise
-  of LiveFix and it held up.
-- Nemotron produced correct minimal patches when grounded with those snippets.
+- Tavily `search_depth="advanced"` returned genuinely useful, current snippets for
+  freshly disclosed CVEs, which is the load-bearing premise of LiveFix: on a
+  benchmark of five real 2026 CVEs across two ecosystems (PyPI and npm) the model
+  named the safe version 15/15 with Tavily and 0/15 without (it abstained). It
+  held up.
+- Nemotron produced correct minimal patches when grounded with current docs, and
+  abstained honestly rather than hallucinating when it lacked the fact.
 
 If any of the above is already solved and we missed it, point us at the doc and we
 will update this file; the aim is useful signal, not a complaint list.

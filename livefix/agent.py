@@ -15,9 +15,11 @@ from .search import SearchHit, WebSearch
 from .tracing import traceable
 
 _TRACE_FILE_RE = re.compile(r'File "([^"]+)", line (\d+)')
-# pytest renders frames as `<path>:<line>: in <func>`; `.+?\.py` stops at the
-# first .py so a Windows drive-letter colon (C:\...) does not break the match.
-_PYTEST_FILE_RE = re.compile(r"^(.+?\.py):(\d+): in ", re.MULTILINE)
+# pytest renders intermediate frames as `<path>:<line>: in <func>` and the final
+# exception location as `<path>:<line>: <ExceptionType>`. Match both by requiring
+# only `:<line>: ` after the path; `.+?\.py` stops at the first .py so a Windows
+# drive-letter colon (C:\...) does not break the match.
+_PYTEST_FILE_RE = re.compile(r"^(.+?\.py):(\d+): \S", re.MULTILINE)
 _FENCE_RE = re.compile(r"^```[a-zA-Z0-9_-]*\s*|\s*```$", re.MULTILINE)
 
 _SYSTEM = (
@@ -90,8 +92,14 @@ def candidate_files(output: str, project_dir: Path, limit: int = 3) -> list[Path
 def build_query(output: str) -> str:
     lines = [l.strip() for l in output.splitlines() if l.strip()]
     for line in reversed(lines):
-        if re.search(r"(Error|Exception|Warning):", line):
-            return line[:200]
+        # Skip pytest's one-line summary (e.g. `FAILED test_app.py::... - Attr...`),
+        # which truncates the message and carries the test id as search noise.
+        if line.startswith(("FAILED", "ERROR ")) or "::" in line:
+            continue
+        # Strip pytest's `E   ` assertion marker so the query is the clean message.
+        cleaned = re.sub(r"^E\s+", "", line)
+        if re.search(r"(Error|Exception|Warning):", cleaned):
+            return cleaned[:200]
     return lines[-1][:200] if lines else "python test failure"
 
 
@@ -148,6 +156,25 @@ class LiveFixAgent:
         self.chat = NebiusChat(config)
         self.search = WebSearch(config.tavily_api_key)
 
+    def _changes_something(self, files: dict[str, str]) -> bool:
+        """True if at least one proposed file exists and differs from disk.
+
+        A model will sometimes echo the file back unchanged or return a file it
+        is not asked about; such a reply parses but fixes nothing. Treat it as a
+        non-answer so the retry loop keeps looking instead of giving up.
+        """
+        for rel, content in files.items():
+            target = (self.project_dir / rel).resolve()
+            try:
+                target.relative_to(self.project_dir)
+            except ValueError:
+                continue
+            if target.exists() and content != target.read_text(
+                encoding="utf-8", errors="replace"
+            ):
+                return True
+        return False
+
     def _apply(self, files: dict[str, str]) -> tuple[list[str], dict[str, str]]:
         changed: list[str] = []
         diffs: dict[str, str] = {}
@@ -199,13 +226,19 @@ class LiveFixAgent:
             # The model occasionally returns prose instead of the JSON contract;
             # retry a few times (temperature 0) before giving up on this iteration.
             explanation, proposed = "", {}
-            # Escalate temperature on retry: a deterministic non-JSON reply at
-            # temperature 0 would repeat, so later attempts re-roll it.
-            for temp in (0.0, 0.3, 0.6):
-                reply = self.chat.complete(_SYSTEM, prompt, temperature=temp)
+            # Escalate temperature on retry: a deterministic non-JSON or no-op
+            # reply at temperature 0 would just repeat, so later attempts re-roll
+            # it. Accept a reply only once it actually changes a project file; a
+            # reply that parses but echoes the file back unchanged is not an answer.
+            for temp in (0.0, 0.2, 0.4, 0.6, 0.8):
+                try:
+                    reply = self.chat.complete(_SYSTEM, prompt, temperature=temp)
+                except Exception:
+                    continue  # transient model/API failure: fall through to the next attempt
                 explanation, proposed = _parse_files(reply)
-                if proposed:
+                if proposed and self._changes_something(proposed):
                     break
+                proposed = {}  # unusable (no JSON, or a no-op); keep trying
             changed, diffs = self._apply(proposed)
             result.iterations.append(
                 Iteration(i, False, error, query, hits, changed, explanation, diffs))
