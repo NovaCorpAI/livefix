@@ -32,8 +32,10 @@ _SYSTEM = (
     "JSON object and nothing else: "
     '{"explanation": "<one sentence>", "files": {"<relative/path>": "<full new '
     'file content>"}}. Only include files you actually change, and always give '
-    "their COMPLETE new content, not a diff. Output only the JSON object, with "
-    "no reasoning, commentary, or markdown before or after it."
+    "their COMPLETE new content, not a diff. Encode each file's content as a "
+    'standard JSON string: escape every double quote as \\" and every newline as '
+    "\\n. Never use triple quotes or Python string literals. Output only the JSON "
+    "object, with no reasoning, commentary, or markdown before or after it."
 )
 
 
@@ -108,25 +110,38 @@ def build_query(output: str) -> str:
 _DECODER = json.JSONDecoder(strict=False)
 
 
+def _demote_triple_quotes(text: str) -> str:
+    """Some models wrap a multi-line file value in Python triple quotes instead
+    of a JSON string, to avoid escaping the quotes inside it. The decoder is
+    already lenient about literal newlines in strings, so demoting the
+    triple-quote delimiter to a single double quote turns that back into
+    parseable JSON. A no-op when the reply has no triple quotes."""
+    return text.replace('"""', '"').replace("'''", '"')
+
+
 def _parse_files(reply: str) -> tuple[str, dict[str, str]]:
     # Scan every "{" and return the first object that actually parses AND carries
-    # a "files" dict. This skips braces inside any reasoning prose the model emits
-    # before the JSON (a first-brace-to-last-brace slice would span that and fail).
-    text = _FENCE_RE.sub("", reply)
-    for i, ch in enumerate(text):
-        if ch != "{":
-            continue
-        try:
-            data, _ = _DECODER.raw_decode(text[i:])
-        except json.JSONDecodeError:
-            continue
-        if isinstance(data, dict) and isinstance(data.get("files"), dict):
-            files = {
-                k: v
-                for k, v in data["files"].items()
-                if isinstance(k, str) and isinstance(v, str)
-            }
-            return str(data.get("explanation", "")), files
+    # a non-empty "files" dict. This skips braces inside any reasoning prose the
+    # model emits before the JSON (a first-brace-to-last-brace slice would span
+    # that and fail). We try the reply as-is first, then with Python triple-quote
+    # file values demoted to JSON strings.
+    base = _FENCE_RE.sub("", reply)
+    for text in (base, _demote_triple_quotes(base)):
+        for i, ch in enumerate(text):
+            if ch != "{":
+                continue
+            try:
+                data, _ = _DECODER.raw_decode(text[i:])
+            except json.JSONDecodeError:
+                continue
+            if isinstance(data, dict) and isinstance(data.get("files"), dict):
+                files = {
+                    k: v
+                    for k, v in data["files"].items()
+                    if isinstance(k, str) and isinstance(v, str)
+                }
+                if files:
+                    return str(data.get("explanation", "")), files
     return "", {}
 
 
