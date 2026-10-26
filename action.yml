@@ -28,6 +28,10 @@ inputs:
     description: "Project directory to remediate."
     required: false
     default: "."
+  install:
+    description: "Install the upgraded dependencies before verifying (recommended in CI, so the tests run against the version the bump actually resolves to)."
+    required: false
+    default: "true"
   python-version:
     description: "Python version to run on."
     required: false
@@ -74,6 +78,8 @@ runs:
       run: |
         set -uo pipefail
         emit="$(mktemp -d)"
+        install_flag=""
+        if [ "${{ inputs.install }}" = "true" ]; then install_flag="--install"; fi
         python -m livefix.remediate \
           --project "${{ inputs.project }}" \
           --package "${{ inputs.package }}" \
@@ -81,6 +87,7 @@ runs:
           --note "${{ inputs.note }}" \
           --manifest "${{ inputs.manifest }}" \
           --test "${{ inputs.test }}" \
+          $install_flag \
           --emit-dir "$emit" || true
         verified="$(cat "$emit/verified.txt" 2>/dev/null || echo false)"
         {

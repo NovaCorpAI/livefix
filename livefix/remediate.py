@@ -145,13 +145,30 @@ class RemediationResult:
 
 class Remediator:
     def __init__(self, config: Config, project_dir, test_command: str,
-                 manifest: str = "requirements.txt"):
+                 manifest: str = "requirements.txt", install: bool = False):
         self.config = config
         self.project_dir = Path(project_dir).resolve()
         self.test_command = test_command
         self.manifest = manifest
+        self.install = install
         self.chat = NebiusChat(config)
         self.search = WebSearch(config.tavily_api_key)
+
+    def _install_manifest(self, manifest_path: Path) -> None:
+        """Install the now upgraded dependencies so the repair loop verifies
+        against the real upgraded version, not whatever happened to be present.
+        A failed install is not fatal: it surfaces honestly as a test error in
+        the repair loop."""
+        if not manifest_path.is_file():
+            return
+        import subprocess
+        try:
+            subprocess.run(
+                [sys.executable, "-m", "pip", "install", "-r", str(manifest_path)],
+                cwd=str(self.project_dir), capture_output=True, text=True, check=False,
+            )
+        except Exception:
+            pass
 
     @traceable(name="livefix.remediate")
     def remediate(self, package: str, advisory: str, note: str = "") -> RemediationResult:
@@ -166,6 +183,12 @@ class Remediator:
         except ValueError:
             manifest_path = self.project_dir / "requirements.txt"
         before, after = bump_pin(manifest_path, package, res.safe_version)
+
+        # In CI the upgraded dependency is not yet installed, so verifying against
+        # it means installing it first; otherwise the repair loop would test the
+        # old version still on disk. Local users manage their own environment.
+        if self.install:
+            self._install_manifest(manifest_path)
 
         # Fix whatever the upgrade broke, verified by the project's own tests.
         repair = LiveFixAgent(self.config, self.project_dir, self.test_command).run()
@@ -183,6 +206,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--note", default="", help="Short advisory description (optional).")
     ap.add_argument("--test", required=True, help='Test command, e.g. "python -m pytest -q".')
     ap.add_argument("--manifest", default="requirements.txt", help="Dependency manifest filename.")
+    ap.add_argument("--install", action="store_true",
+                    help="After bumping, install the upgraded dependencies so the repair "
+                    "loop verifies against them (use this in CI).")
     ap.add_argument("--emit-dir", default=None,
                     help="Write the PR title, body and commit trailer here (for the GitHub Action).")
     args = ap.parse_args(argv)
@@ -193,7 +219,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     config = Config.from_env()
-    rem = Remediator(config, project, args.test, args.manifest)
+    rem = Remediator(config, project, args.test, args.manifest, install=args.install)
     print(f"LiveFix remediation on {project}")
     print(f"  model: {config.nebius_model}")
     print(f"  web search: {'on (Tavily)' if rem.search.enabled else 'off'}")

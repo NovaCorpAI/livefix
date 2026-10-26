@@ -12,6 +12,10 @@ on:
       advisory:
         description: "CVE or GHSA id"
         required: true
+      project:
+        description: "Project directory to remediate"
+        required: false
+        default: "examples/vulnerable_project"
       test:
         description: "Test command"
         required: false
@@ -42,6 +46,7 @@ jobs:
         with:
           package: ${{ github.event.inputs.package }}
           advisory: ${{ github.event.inputs.advisory }}
+          project: ${{ github.event.inputs.project }}
           test: ${{ github.event.inputs.test }}
           note: ${{ github.event.inputs.note }}
 
