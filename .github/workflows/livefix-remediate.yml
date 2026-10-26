@@ -28,6 +28,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  statuses: write
 
 jobs:
   remediate:
@@ -68,6 +69,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Open the remediation pull request
+        id: cpr
         if: steps.fix.outputs.verified == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
@@ -80,3 +82,17 @@ jobs:
           labels: |
             security
             livefix
+
+      - name: Post the LiveFix verified check on the PR
+        # Attach the `LiveFix / remediation-verified` status to the PR's head
+        # commit, so the green check shows on the pull request itself, not only
+        # in this run. It is green only because the project's tests passed.
+        if: steps.fix.outputs.verified == 'true' && steps.cpr.outputs.pull-request-head-sha != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api -X POST "repos/${{ github.repository }}/statuses/${{ steps.cpr.outputs.pull-request-head-sha }}" \
+            -f state=success \
+            -f "context=LiveFix / remediation-verified" \
+            -f "description=Remediated and verified by the project's tests" \
+            -f "target_url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
