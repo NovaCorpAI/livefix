@@ -32,6 +32,10 @@ inputs:
     description: "Install the upgraded dependencies before verifying (recommended in CI, so the tests run against the version the bump actually resolves to)."
     required: false
     default: "true"
+  extra-deps:
+    description: "Extra pip packages to install before running, space separated (for example your project's test runner, such as pytest)."
+    required: false
+    default: ""
   python-version:
     description: "Python version to run on."
     required: false
@@ -64,7 +68,13 @@ runs:
 
     - name: Install LiveFix
       shell: bash
-      run: pip install -r "$GITHUB_ACTION_PATH/requirements.txt"
+      run: |
+        pip install -r "$GITHUB_ACTION_PATH/requirements.txt"
+        # The project brings its own test runner (pytest, etc.); install it so
+        # the verify step can actually run the project's tests on the runner.
+        if [ -n "${{ inputs.extra-deps }}" ]; then
+          pip install ${{ inputs.extra-deps }}
+        fi
 
     - name: Remediate
       id: livefix

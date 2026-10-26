@@ -49,6 +49,8 @@ jobs:
           project: ${{ github.event.inputs.project }}
           test: ${{ github.event.inputs.test }}
           note: ${{ github.event.inputs.note }}
+          # The bundled example is tested with pytest; install it on the runner.
+          extra-deps: pytest
 
       - name: Compose the signed commit message
         if: steps.fix.outputs.verified == 'true'

@@ -121,6 +121,7 @@ verified remediation PR with no human in the loop:
     package: pillow
     advisory: CVE-2026-112398
     test: python -m pytest -q
+    extra-deps: pytest   # your project's test runner, installed on the runner
 ```
 
 The PR it opens carries an honest signature: a one-line summary, a collapsed
