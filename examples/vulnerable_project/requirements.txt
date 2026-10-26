@@ -2,4 +2,4 @@
 # (CVE-2026-112398). The pin is stale: the fix only ships in Pillow 13.0.0,
 # and that major release also removed the ImageCmsProfile.product_name
 # attribute this project uses, so the security upgrade breaks the build.
-pillow==12.3.0
+pillow>=13.0.0
