@@ -341,6 +341,7 @@
       </div>
     </div>
     <p class="safety" style="margin-top:12px"><b>Honest by construction:</b> the mark says the change was remediated and verified by your tests, never that a human reviewed it. The check goes green only when the tests pass.</p>
+    <p class="replay-note" style="margin-top:12px"><b>It scales past one file.</b> When the upgrade breaks several modules at once, LiveFix repairs each in turn until the whole build is green, not just the first error. We ship <a href="https://github.com/NovaCorpAI/livefix/tree/main/examples/profile_service" target="_blank" rel="noopener">a real three-file example</a> it remediates end to end.</p>
   </section>
 
   <section id="demo" class="reveal">

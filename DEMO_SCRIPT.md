@@ -75,10 +75,13 @@ Say: "Small codebase, because Nebius Token Factory is OpenAI-compatible, so the
 official SDK just worked. Optional LangSmith tracing shows every step. We wrote up
 concrete platform feedback from building this."
 
-Optional closing beat (show `examples/sample_remediation_pr.md`): "And it ships as
-a GitHub Action, so a scanner alert opens this as a signed, verified PR: a one-line
-summary, the trace, and a check that is green only because the tests pass. LiveFix:
-live-grounded security remediation, on NVIDIA Nemotron and Nebius, with Tavily."
+Optional closing beat (show PR #1 and PR #2 on the repo): "And it ships as a
+GitHub Action, so a scanner alert opens this as a signed, verified PR: a one-line
+summary, the trace, and a check that is green only because the tests pass. Here
+are two it opened for real, and the second one is the proof it generalizes: the
+upgrade broke three files, and LiveFix repaired each until the whole build went
+green. LiveFix: live-grounded security remediation, on NVIDIA Nemotron and Nebius,
+with Tavily."
 
 ## Recording checklist
 

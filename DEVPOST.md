@@ -88,6 +88,19 @@ release removed `ImageCmsProfile.product_name`. LiveFix resolves 13.0.0 from the
 web, bumps the pin, rewrites the code to `ImageCms.getProfileName`, and the test
 passes.
 
+And it generalizes beyond a one-line swap. A second example
+(`examples/profile_service/`) breaks in three modules at once, because Pillow 13
+removed three attributes it reads (`product_name`, `product_desc`,
+`product_copyright`), and LiveFix repairs each in turn until the whole build is
+green. Both examples run as the real GitHub Action, which opened two signed,
+verified pull requests on the repo (PR #1, one file; PR #2, three files).
+
+None of the benchmark is invented: every CVE is real and checkable. We cross
+checked each one against NVD and OSV, and every safe version we grade against
+matches the authoritative GitHub Advisory Database fixed version;
+`benchmark/security/GROUND_TRUTH.md` has one-click links so a judge can verify any
+row in seconds.
+
 ## Where LiveFix fits, and the business behind it
 
 LiveFix is not another scanner. It is the missing last mile of the pipeline every
@@ -123,10 +136,12 @@ Resilience Act, the SEC disclosure rules) is turning into a hard obligation.
 
 ## Accomplishments we are proud of
 
-- A working, safe, end-to-end remediation in a small, readable codebase.
+- A working, safe, end-to-end remediation in a small, readable codebase, proven
+  live: the GitHub Action opened two signed, verified PRs, one of them repairing a
+  break that spanned three files.
 - A benchmark that turns the core claim into a clean number (15/15 vs 0/15) on
-  five real 2026 CVEs across two ecosystems, plus the intellectual honesty to show
-  where the web does *not* help.
+  five real, independently verifiable 2026 CVEs across two ecosystems, plus the
+  intellectual honesty to show where the web does *not* help.
 - Concrete, actionable platform feedback from genuinely building on the stack.
 
 ## What we learned
