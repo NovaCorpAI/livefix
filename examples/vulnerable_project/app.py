@@ -10,4 +10,4 @@ from PIL import ImageCms
 
 def profile_label(profile):
     """Return the profile's human-readable name, trimmed."""
-    return profile.product_name.strip()
+    return ImageCms.getProfileName(profile).strip()
