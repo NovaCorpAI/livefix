@@ -214,6 +214,14 @@ python -m pytest tests/ -q
 The tests stub the Nebius and Tavily SDKs, so they run with no keys and no
 network.
 
+## Security
+
+LiveFix edits code and can open PRs, so it is worth being precise about what it
+can and cannot do. [`THREAT_MODEL.md`](THREAT_MODEL.md) states it plainly: writes
+are confined to the project, nothing ships unless the tests pass, a broken fix is
+rejected before it is applied, and the loop is bounded. It also covers how secrets
+are handled and the residual risk.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
