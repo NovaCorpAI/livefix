@@ -9,4 +9,4 @@ from PIL import ImageCms
 
 def profile_description(profile):
     """Return the profile's description, trimmed."""
-    return profile.product_desc.strip()
+    return ImageCms.getProfileDescription(profile).strip()
