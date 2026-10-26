@@ -1,0 +1,12 @@
+{
+  "name": "js-project",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A tiny npm project whose security upgrade removes the callable glob export.",
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "glob": "7.2.3"
+  }
+}

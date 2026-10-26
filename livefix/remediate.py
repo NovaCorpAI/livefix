@@ -116,11 +116,42 @@ def _pin_line_re(package: str) -> re.Pattern:
     )
 
 
-def bump_pin(manifest_path: Path, package: str, safe_version: str) -> tuple[str | None, str | None]:
-    """Pin `package` to `>=safe_version` in a requirements file.
+def bump_package_json(manifest_path: Path, package: str, safe_version: str) -> tuple[str | None, str | None]:
+    """Pin `package` to `>=safe_version` in an npm package.json.
 
-    Returns (old_line, new_line); (None, None) if the package is not listed.
+    Edits the version range in dependencies or devDependencies, preserving the
+    file's key order. Returns (old_spec, new_spec) as `"name": "range"` strings
+    for display; (None, None) if the package is not listed.
     """
+    if not manifest_path.is_file():
+        return None, None
+    try:
+        data = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None, None
+    for section in ("dependencies", "devDependencies", "optionalDependencies"):
+        deps = data.get(section)
+        if isinstance(deps, dict) and package in deps:
+            old_range = str(deps[package])
+            new_range = f">={safe_version}"
+            if old_range == new_range:
+                return f'"{package}": "{old_range}"', None  # already satisfied
+            deps[package] = new_range
+            manifest_path.write_text(
+                json.dumps(data, indent=2) + "\n", encoding="utf-8")
+            return f'"{package}": "{old_range}"', f'"{package}": "{new_range}"'
+    return None, None
+
+
+def bump_pin(manifest_path: Path, package: str, safe_version: str) -> tuple[str | None, str | None]:
+    """Pin `package` to `>=safe_version` in the dependency manifest.
+
+    Dispatches by manifest type: a package.json is edited as JSON, anything else
+    as a pip requirements file. Returns (old, new); (None, None) if the package
+    is not listed.
+    """
+    if manifest_path.name == "package.json":
+        return bump_package_json(manifest_path, package, safe_version)
     if not manifest_path.is_file():
         return None, None
     lines = manifest_path.read_text(encoding="utf-8").splitlines()
@@ -169,15 +200,24 @@ class Remediator:
     def _install_manifest(self, manifest_path: Path) -> None:
         """Install the now upgraded dependencies so the repair loop verifies
         against the real upgraded version, not whatever happened to be present.
-        A failed install is not fatal: it surfaces honestly as a test error in
-        the repair loop."""
+        Dispatches by manifest type: `npm install` for a package.json, `pip
+        install -r` otherwise. A failed install is not fatal: it surfaces
+        honestly as a test error in the repair loop."""
         if not manifest_path.is_file():
             return
+        import shutil
         import subprocess
+        if manifest_path.name == "package.json":
+            npm = shutil.which("npm")
+            cmd = [npm, "install"] if npm else None
+        else:
+            cmd = [sys.executable, "-m", "pip", "install", "-r", str(manifest_path)]
+        if not cmd:
+            return
         try:
             subprocess.run(
-                [sys.executable, "-m", "pip", "install", "-r", str(manifest_path)],
-                cwd=str(self.project_dir), capture_output=True, text=True, check=False,
+                cmd, cwd=str(self.project_dir),
+                capture_output=True, text=True, check=False,
             )
         except Exception:
             pass

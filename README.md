@@ -111,6 +111,30 @@ The repair loop also runs on its own, for any failing test (no CVE required):
 python -m livefix --project examples/broken_project --test "python -m pytest -q"
 ```
 
+## Not Python-specific: a JavaScript / npm example
+
+The repair loop is language-agnostic; the only ecosystem-specific pieces are
+reading the stack trace, validating the edit, bumping the manifest, and
+installing. [`examples/js_project`](examples/js_project) is a real npm package
+whose security upgrade removes the API it uses: it was written against **glob 7**
+(whose default export is a callable function) and **glob 9 removed that callable
+export**, so the upgrade throws `TypeError: glob is not a function`. LiveFix reads
+the Node stack trace, rewrites `filelist.js` to the current glob API (validated
+with `node --check`), and loops until `node --test` is green, bumping
+`package.json` and installing with `npm` along the way.
+
+```bash
+cd examples/js_project && npm install glob@10.4.5   # the breaking security upgrade
+node --test                                         # red: glob is not a function
+python -m livefix --project . --test "node --test"  # LiveFix repairs it
+node --test                                         # green
+```
+
+Two safety properties matter here and in every ecosystem: the agent **never edits
+a test file** (the test is the spec it is verified against, so it cannot pass by
+rewriting the test), and it **never applies a fix that does not parse** (`ast` for
+Python, `node --check` for JavaScript). See [`THREAT_MODEL.md`](THREAT_MODEL.md).
+
 ## Quick start
 
 ```bash

@@ -96,6 +96,21 @@ removed three attributes it reads (`product_name`, `product_desc`,
 green. Both examples run as the real GitHub Action, which opened two signed,
 verified pull requests on the repo (PR #1, one file; PR #2, three files).
 
+It is not even Python-specific. A third example (`examples/js_project/`) is a
+JavaScript/npm project: it was written against glob 7, whose default export is a
+callable function, and glob 9 removed that export, so the security upgrade throws
+`TypeError: glob is not a function`. LiveFix reads the Node stack trace, rewrites
+the source to the current glob API (validated with `node --check` instead of
+Python's `ast`), bumps `package.json` instead of `requirements.txt`, and loops
+until `node --test` is green. The repair loop itself is unchanged: only the
+stack-trace reader, the syntax validator, the manifest editor, and the installer
+are ecosystem-specific.
+
+Two safety properties hold across every ecosystem and are worth calling out: the
+agent **never edits a test file** (the test is the spec it is verified against, so
+it cannot "pass" by rewriting the test), and it **never applies a fix that does
+not parse**. `THREAT_MODEL.md` has the full list.
+
 None of the benchmark is invented: every CVE is real and checkable. We cross
 checked each one against NVD and OSV, and every safe version we grade against
 matches the authoritative GitHub Advisory Database fixed version;
@@ -146,7 +161,8 @@ LiveFix reports the exact tokens and estimated cost on every run.
 
 - A working, safe, end-to-end remediation in a small, readable codebase, proven
   live: the GitHub Action opened two signed, verified PRs, one of them repairing a
-  break that spanned three files.
+  break that spanned three files, and the same loop repairs a JavaScript/npm
+  break too (a second ecosystem, verified with `node --test`).
 - A benchmark that turns the core claim into a clean number (24/24 vs 0/24) on
   eight real, independently verifiable 2026 CVEs across four ecosystems, plus the
   intellectual honesty to show where the web does *not* help.

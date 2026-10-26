@@ -22,8 +22,14 @@ not, and why it is safe to run in CI. This is the short, honest version.
 - **Ship an unverified change.** Nothing is reported as remediated unless the
   project's own tests pass afterward. The `LiveFix / remediation-verified` check is
   green only on a real test pass; the step exits non-zero otherwise.
-- **Apply a syntactically broken fix.** A proposed `.py` file that does not parse
-  (`ast.parse`) is rejected, and the loop retries instead of writing it.
+- **Apply a syntactically broken fix.** A proposed file that does not parse is
+  rejected and the loop retries instead of writing it: Python via `ast.parse`,
+  JavaScript via `node --check`.
+- **Pass a test by rewriting the test.** The test is the spec the fix is verified
+  against, so the agent never writes to a test file (`test_*.py`, `*.test.js`,
+  anything under a `test/`, `tests/` or `__tests__/` directory, etc.). Test files
+  are shown to the model as read-only context; only non-test source is edited
+  (`_is_test_file`, used by `_apply` and `_changes_something`).
 - **Loop forever.** The repair loop is bounded (default five iterations) and stops
   early when an iteration changes nothing.
 - **Merge anything.** It opens a PR; a human still reviews and merges.

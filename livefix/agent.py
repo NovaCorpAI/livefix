@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import difflib
 import json
+import os
 import re
 import shlex
+import shutil
 import subprocess
+import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -20,6 +23,14 @@ _TRACE_FILE_RE = re.compile(r'File "([^"]+)", line (\d+)')
 # only `:<line>: ` after the path; `.+?\.py` stops at the first .py so a Windows
 # drive-letter colon (C:\...) does not break the match.
 _PYTEST_FILE_RE = re.compile(r"^(.+?\.py):(\d+): \S", re.MULTILINE)
+# Node/V8 stack frames name the file two ways: `at <func> (<path>:<line>:<col>)`
+# and, with no function, a bare `at <path>:<line>:<col>`. Paths may hold spaces
+# (".../Proyectos Novacorp AI/...") and a Windows drive colon, so the capture is
+# "anything up to `:<line>:<col>`", anchored to the `(` or the `at ` that
+# precedes it. node:internal frames have no extension and are filtered out later
+# by the in-project check. Covers .js/.mjs/.cjs/.ts.
+_JS_PAREN_FILE_RE = re.compile(r"\(([^()\n]+?\.[mc]?[jt]s):(\d+):\d+\)")
+_JS_BARE_FILE_RE = re.compile(r"\bat\s+([^()\n]+?\.[mc]?[jt]s):(\d+):\d+", re.MULTILINE)
 _FENCE_RE = re.compile(r"^```[a-zA-Z0-9_-]*\s*|\s*```$", re.MULTILINE)
 
 _SYSTEM = (
@@ -76,7 +87,12 @@ def error_excerpt(output: str, max_lines: int = 40) -> str:
 def candidate_files(output: str, project_dir: Path, limit: int = 3) -> list[Path]:
     seen: list[Path] = []
     project_dir = project_dir.resolve()
-    matches = _TRACE_FILE_RE.findall(output) + _PYTEST_FILE_RE.findall(output)
+    matches = (
+        _TRACE_FILE_RE.findall(output)
+        + _PYTEST_FILE_RE.findall(output)
+        + _JS_PAREN_FILE_RE.findall(output)
+        + _JS_BARE_FILE_RE.findall(output)
+    )
     for raw, _line in matches:
         p = Path(raw)
         if not p.is_absolute():
@@ -89,6 +105,27 @@ def candidate_files(output: str, project_dir: Path, limit: int = 3) -> list[Path
         if p.is_file() and p not in seen:
             seen.append(p)
     return seen[-limit:]
+
+
+_TEST_DIR_NAMES = {"test", "tests", "__tests__", "spec", "specs"}
+_TEST_NAME_RE = re.compile(
+    r"(^test_.*\.py$|.*_test\.py$|^conftest\.py$|.*\.(test|spec)\.[mc]?[jt]s$)",
+    re.IGNORECASE,
+)
+
+
+def _is_test_file(rel: str) -> bool:
+    """True if a project-relative path is one of the project's own test files.
+
+    LiveFix must never make a test pass by rewriting the test: the test is the
+    spec it is verified against. So test files are shown to the model as
+    read-only context but never written. The heuristic matches both the common
+    file-name conventions (test_x.py, x_test.py, conftest.py, x.test.js,
+    x.spec.ts) and any file under a test/tests/__tests__/spec directory."""
+    parts = rel.replace("\\", "/").split("/")
+    if any(seg.lower() in _TEST_DIR_NAMES for seg in parts[:-1]):
+        return True
+    return bool(_TEST_NAME_RE.match(parts[-1]))
 
 
 def build_query(output: str) -> str:
@@ -136,7 +173,7 @@ def _parse_files(reply: str) -> tuple[str, dict[str, str]]:
                 continue
             if isinstance(data, dict) and isinstance(data.get("files"), dict):
                 files = {
-                    k: v
+                    k: (_recover_double_encoded(v) if _looks_double_escaped(v) else v)
                     for k, v in data["files"].items()
                     if isinstance(k, str) and isinstance(v, str)
                 }
@@ -153,7 +190,12 @@ def _build_user_prompt(
     for f in files:
         rel = f.relative_to(project_dir.resolve())
         body = f.read_text(encoding="utf-8", errors="replace")[:6000]
-        parts.append(f"\n### {rel}\n```\n{body}\n```\n")
+        if _is_test_file(str(rel)):
+            parts.append(
+                f"\n### {rel} (TEST FILE, read-only: do not modify, it defines "
+                f"the expected behavior; fix the source instead)\n```\n{body}\n```\n")
+        else:
+            parts.append(f"\n### {rel}\n```\n{body}\n```\n")
     parts.append("\n## Live web search results\n")
     if hits:
         for h in hits:
@@ -178,6 +220,78 @@ def _valid_python(files: dict[str, str]) -> bool:
     return True
 
 
+_JS_SUFFIXES = (".js", ".mjs", ".cjs")
+
+
+def _valid_js(files: dict[str, str]) -> bool:
+    """Reject a proposed change that would write syntactically invalid JavaScript,
+    the same guard as `_valid_python` but for the npm ecosystem: `node --check`
+    parses a file without running it. If node is not on PATH the check is skipped
+    (returns True), so the gate never blocks a repair just because the validator
+    is unavailable; a genuine break still surfaces when the test runs."""
+    node = shutil.which("node")
+    if not node:
+        return True
+    for path, content in files.items():
+        if path.endswith(_JS_SUFFIXES):
+            suffix = os.path.splitext(path)[1]
+            tmp = tempfile.NamedTemporaryFile(
+                mode="w", suffix=suffix, delete=False, encoding="utf-8")
+            try:
+                tmp.write(content)
+                tmp.close()
+                proc = subprocess.run(
+                    [node, "--check", tmp.name],
+                    capture_output=True, text=True)
+                if proc.returncode != 0:
+                    return False
+            finally:
+                try:
+                    os.unlink(tmp.name)
+                except OSError:
+                    pass
+    return True
+
+
+def _looks_double_escaped(content: str) -> bool:
+    """True if a file body was double-encoded: the whole thing arrives on one
+    physical line with literal backslash-n sequences and no real newline. That
+    decodes to a single inert string literal (valid JS, sometimes valid Python),
+    which the syntax gate would wave through even though the file does nothing.
+    The model's intent is usually correct, so we recover rather than reject."""
+    return "\\n" in content and "\n" not in content and len(content) > 40
+
+
+_ESCAPES = {"n": "\n", "t": "\t", "r": "\r", '"': '"', "'": "'", "\\": "\\", "/": "/"}
+
+
+def _recover_double_encoded(content: str) -> str:
+    """Turn a double-encoded body back into real source: strip a wrapping quote
+    pair if present, then resolve the literal backslash escapes (\\n, \\t, \\",
+    \\\\) in a single left-to-right pass. Only called on values that look
+    double-encoded, so a normal file is never touched."""
+    s = content
+    if len(s) >= 2 and s[0] == s[-1] and s[0] in "\"'":
+        s = s[1:-1]
+    out: list[str] = []
+    i = 0
+    while i < len(s):
+        if s[i] == "\\" and i + 1 < len(s):
+            out.append(_ESCAPES.get(s[i + 1], s[i + 1]))
+            i += 2
+        else:
+            out.append(s[i])
+            i += 1
+    return "".join(out)
+
+
+def _valid_syntax(files: dict[str, str]) -> bool:
+    """Language-agnostic syntax gate: every proposed file must parse in its own
+    language before the loop applies it. Python via `ast`, JavaScript via
+    `node --check`; files in other languages pass through unchecked."""
+    return _valid_python(files) and _valid_js(files)
+
+
 class LiveFixAgent:
     def __init__(self, config, project_dir: str | Path, test_command: str,
                  chat: NebiusChat | None = None, search: WebSearch | None = None):
@@ -197,6 +311,8 @@ class LiveFixAgent:
         non-answer so the retry loop keeps looking instead of giving up.
         """
         for rel, content in files.items():
+            if _is_test_file(rel):
+                continue  # editing the test never counts as a repair
             target = (self.project_dir / rel).resolve()
             try:
                 target.relative_to(self.project_dir)
@@ -212,6 +328,8 @@ class LiveFixAgent:
         changed: list[str] = []
         diffs: dict[str, str] = {}
         for rel, content in files.items():
+            if _is_test_file(rel):
+                continue  # test files are the spec; never rewrite them
             target = (self.project_dir / rel).resolve()
             try:
                 target.relative_to(self.project_dir)
@@ -269,9 +387,9 @@ class LiveFixAgent:
                 except Exception:
                     continue  # transient model/API failure: fall through to the next attempt
                 explanation, proposed = _parse_files(reply)
-                if proposed and self._changes_something(proposed) and _valid_python(proposed):
+                if proposed and self._changes_something(proposed) and _valid_syntax(proposed):
                     break
-                proposed = {}  # unusable (no JSON, a no-op, or invalid Python); keep trying
+                proposed = {}  # unusable (no JSON, a no-op, or invalid syntax); keep trying
             changed, diffs = self._apply(proposed)
             result.iterations.append(
                 Iteration(i, False, error, query, hits, changed, explanation, diffs))
