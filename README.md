@@ -135,6 +135,18 @@ a test file** (the test is the spec it is verified against, so it cannot pass by
 rewriting the test), and it **never applies a fix that does not parse** (`ast` for
 Python, `node --check` for JavaScript). See [`THREAT_MODEL.md`](THREAT_MODEL.md).
 
+## Tested on a real third-party repo
+
+The examples above are ours. To close the loop on code we did not write, we ran
+LiveFix against [`python-qrcode`](https://github.com/lincolnloop/python-qrcode), a
+widely used BSD-licensed library, pinned to the vulnerable Pillow 12.3.0 and
+verified against the project's own PIL test suite. LiveFix resolved Pillow 13.0.0
+from the live web, bumped the pin, installed it, and the 26 tests stayed green: a
+clean, verified remediation on an unmodified third-party repo. This library did
+not use any API the upgrade removed, so no code repair was needed, and LiveFix did
+not fabricate one: it reported the tests already passing. The agent repairs when
+the upgrade breaks something and stays out of the way when it does not.
+
 ## Quick start
 
 ```bash

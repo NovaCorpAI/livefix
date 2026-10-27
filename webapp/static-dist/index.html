@@ -358,7 +358,7 @@
         <span class="svc">pytest</span>
       </div>
     </div>
-    <p class="safety"><b>Safe by construction:</b> every file the agent writes is resolved and checked to stay inside the project, and nothing ships until the project's own tests pass.</p>
+    <p class="safety"><b>Safe by construction:</b> every file the agent writes is resolved and checked to stay inside the project; it never edits a test file (the test is the spec it is verified against) and never applies a fix that does not parse; and nothing ships until the project's own tests pass.</p>
   </section>
 
   <section class="reveal">
@@ -391,6 +391,8 @@
     </div>
     <p class="safety" style="margin-top:12px"><b>Honest by construction:</b> the mark says the change was remediated and verified by your tests, never that a human reviewed it. The check goes green only when the tests pass.</p>
     <p class="replay-note" style="margin-top:12px"><b>It scales past one file.</b> When the upgrade breaks several modules at once, LiveFix repairs each in turn until the whole build is green, not just the first error. We ship <a href="https://github.com/NovaCorpAI/livefix/tree/main/examples/profile_service" target="_blank" rel="noopener">a real three-file example</a> it remediates end to end.</p>
+    <p class="replay-note" style="margin-top:12px"><b>It is not even Python.</b> The same loop fixes a JavaScript and npm break: a <code>glob</code> upgrade that removed a callable export throws <code>TypeError: glob is not a function</code>, and LiveFix reads the Node stack trace, rewrites the source, validates it with <code>node --check</code>, and loops until <code>node --test</code> is green, bumping <code>package.json</code> instead of <code>requirements.txt</code>. Only the stack-trace reader, the validator, the manifest editor and the installer are ecosystem-specific. <a href="https://github.com/NovaCorpAI/livefix/tree/main/examples/js_project" target="_blank" rel="noopener">See the JavaScript example</a>.</p>
+    <p class="replay-note" style="margin-top:12px"><b>And it works on code we did not write.</b> Pointed at <a href="https://github.com/lincolnloop/python-qrcode" target="_blank" rel="noopener">python-qrcode</a>, a widely used BSD-licensed library pinned to the vulnerable Pillow, LiveFix resolved the safe version, bumped the pin, installed it, and verified against the project's own test suite, all green, on an unmodified third-party repo. This library used no API the upgrade removed, so no repair was needed, and LiveFix did not invent one: it repairs when the upgrade breaks something and stays out of the way when it does not.</p>
   </section>
 
   <section id="demo" class="reveal">

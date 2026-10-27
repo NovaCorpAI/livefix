@@ -111,6 +111,17 @@ agent **never edits a test file** (the test is the spec it is verified against, 
 it cannot "pass" by rewriting the test), and it **never applies a fix that does
 not parse**. `THREAT_MODEL.md` has the full list.
 
+And it runs on code we did not write. Beyond our own examples, we pointed LiveFix
+at `python-qrcode`, a real, widely used BSD-licensed library, pinned to the
+vulnerable Pillow 12.3.0, and verified it against the project's own PIL test
+suite. LiveFix resolved Pillow 13.0.0 from the live web, bumped the pin, installed
+it, and the 26 tests stayed green: a clean, verified remediation on a third-party
+repo we never touched. The upgrade happened not to break this library, so no code
+repair was needed, and LiveFix did not invent one: it reported the tests already
+passing instead of fabricating a patch. That is the honest other half of the
+story, and a safety property in its own right. The agent repairs when the upgrade
+breaks something, and stays out of the way when it does not.
+
 None of the benchmark is invented: every CVE is real and checkable. We cross
 checked each one against NVD and OSV, and every safe version we grade against
 matches the authoritative GitHub Advisory Database fixed version;

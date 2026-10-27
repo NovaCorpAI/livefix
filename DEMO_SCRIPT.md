@@ -75,13 +75,25 @@ Say: "Small codebase, because Nebius Token Factory is OpenAI-compatible, so the
 official SDK just worked. Optional LangSmith tracing shows every step. We wrote up
 concrete platform feedback from building this."
 
-Optional closing beat (show PR #1 and PR #2 on the repo): "And it ships as a
-GitHub Action, so a scanner alert opens this as a signed, verified PR: a one-line
-summary, the trace, and a check that is green only because the tests pass. Here
-are two it opened for real, and the second one is the proof it generalizes: the
-upgrade broke three files, and LiveFix repaired each until the whole build went
-green. LiveFix: live-grounded security remediation, on NVIDIA Nemotron and Nebius,
-with Tavily."
+## Shot 5: It generalizes, and it ships (2:40 to 3:00)
+
+Fast montage, 2 to 3 seconds a cut, one short line each over the top. Each cut
+proves a different kind of reach:
+
+- PR #2 on the repo, diff spanning three files: "One upgrade can break several
+  files. Pillow 13 removed three attributes, and LiveFix repaired all three until
+  green."
+- `examples/js_project` ending on `node --test` green: "It is not even Python. The
+  same loop fixes a JavaScript and npm break, a glob upgrade that dropped a
+  callable export, validated with `node --check`."
+- the `python-qrcode` run ending green: "And on python-qrcode, a real library we
+  did not write, it resolved and verified the Pillow upgrade clean, and did not
+  invent a fix when the tests already passed."
+
+End card, voice over it: "It ships as a GitHub Action, so a scanner alert opens
+this as a signed, verified PR, green only because the tests pass. LiveFix:
+live-grounded security remediation, on NVIDIA Nemotron and Nebius Token Factory,
+grounded by Tavily. livefix.novacorplabs.com."
 
 ## Recording checklist
 
@@ -92,4 +104,8 @@ with Tavily."
   but keep the resolved-version line, the Tavily source, and the green result at
   real speed.
 - `git checkout examples/vulnerable_project` to reset between takes.
-- Keep total under 3:00.
+- For Shot 5, pre-capture the three green results (PR #2 diff, `js_project`
+  `node --test`, `python-qrcode` run) as still frames or short clips so the
+  montage needs no live runs and stays inside the 20 seconds.
+- Keep total under 3:00. Shot 5 is the first place to trim if you run long: its
+  three cuts can drop to two (keep JS and python-qrcode) without losing the pitch.
